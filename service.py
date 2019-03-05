@@ -1,1 +1,10 @@
-# file to hold our model definitions of our resource
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+
+def index():
+	return 'Test Flask Environment'
+if __name__ == '__main__':
+	app.run()
+
