@@ -1,0 +1,13 @@
+@app.route('/inventory/<int:inventory_id>', methods=['PUT'])
+def update_inventory(inventory_id):
+    app.logger.info('Updating with id: {}'.format(inventory_id))
+    inventory = Inventory.find(inventory_id)
+    if not inventory:
+        raise NotFound('Inventory with id: {} was not found'.format(inventory_id))
+
+    #process the update request
+    inventory.deserialize(request.get_json())
+    inventory.id = inventory_id #make id matches request
+    inventory.save()
+    app.logger.info('Inventory with id {} has been updated'.format(inventory_id))
+    return jsonify(inventory.serialize()), status.HTTP_200_OK
