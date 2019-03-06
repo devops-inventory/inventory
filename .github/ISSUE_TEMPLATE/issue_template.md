@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**As a.** 
-**I want to.** 
+**As a** 
+**I want to** 
 **So that** 
 
 **Assumptions**
