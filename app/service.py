@@ -13,15 +13,15 @@
 # limitations under the License.
 
 """
-Pet Store Service
+Inventory Service
 
 Paths:
 ------
-GET /pets - Returns a list all of the Pets
-GET /pets/{id} - Returns the Pet with a given id number
-POST /pets - creates a new Pet record in the database
-PUT /pets/{id} - updates a Pet record in the database
-DELETE /pets/{id} - deletes a Pet record in the database
+GET /inventory - Returns a list all of the Inventory
+GET /inventory/{id} - Returns the Inventory with a given id number
+POST /inventory - creates a new Inventory record in the database
+PUT /inventory/{id} - updates an Inventory record in the database
+DELETE /inventory/{id} - deletes an Inventory record in the database
 """
 
 import os
@@ -99,47 +99,47 @@ def internal_server_error(error):
 @app.route('/')
 def index():
     """ Root URL response """
-    return jsonify(name='Pet Demo REST API Service',
+    return jsonify(name='Inventory REST API Service',
                    version='1.0',
-                   paths=url_for('list_pets', _external=True)
+                   paths=url_for('list_inventory', _external=True)
                   ), status.HTTP_200_OK
 
 ######################################################################
-# LIST ALL PETS
+# LIST ALL INVENTORY
 ######################################################################
-@app.route('/pets', methods=['GET'])
-def list_pets():
-    """ Returns all of the Pets """
-    app.logger.info('Request for pet list')
-    pets = []
+@app.route('/inventory', methods=['GET'])
+def list_inventory():
+    """ Returns all of the Inventory """
+    app.logger.info('Request for inventory list')
+    inventory = []
     category = request.args.get('category')
     name = request.args.get('name')
     if category:
-        pets = Pet.find_by_category(category)
+        inventory = Inventory.find_by_category(category)
     elif name:
-        pets = Pet.find_by_name(name)
+        inventory = Inventory.find_by_name(name)
     else:
-        pets = Pet.all()
+        inventory = Inventory.all()
 
-    results = [pet.serialize() for pet in pets]
+    results = [inventory.serialize() for inventory in inventory]
     return make_response(jsonify(results), status.HTTP_200_OK)
 
 
 ######################################################################
-# RETRIEVE A PET
+# RETRIEVE INVENTORY
 ######################################################################
-@app.route('/pets/<int:pet_id>', methods=['GET'])
-def get_pets(pet_id):
+@app.route('/inventory/<int:inventory_id>', methods=['GET'])
+def get_inventory(inventory_id):
     """
-    Retrieve a single Pet
+    Retrieve a single Inventory
 
-    This endpoint will return a Pet based on it's id
+    This endpoint will return an Inventory based on it's id
     """
-    app.logger.info('Request for pet with id: %s', pet_id)
-    pet = Pet.find(pet_id)
-    if not pet:
-        raise NotFound("Pet with id '{}' was not found.".format(pet_id))
-    return make_response(jsonify(pet.serialize()), status.HTTP_200_OK)
+    app.logger.info('Request for Inventory with id: %s', inventory_id)
+    inventory = Inventory.find(inventory_id)
+    if not inventory:
+        raise NotFound("Inventory with id '{}' was not found.".format(inventory_id))
+    return make_response(jsonify(inventory.serialize()), status.HTTP_200_OK)
 
 
 ######################################################################
@@ -165,28 +165,28 @@ def create_inventory():
 
 
 ######################################################################
-# UPDATE AN EXISTING PET
+# UPDATE AN EXISTING INVENTORY
 ######################################################################
-@app.route('/pets/<int:pet_id>', methods=['PUT'])
-def update_pets(pet_id):
+@app.route('/inventory/<int:inventory_id>', methods=['PUT'])
+def update_inventory(inventory_id):
     """
-    Update a Pet
+    Update a Inventory
 
-    This endpoint will update a Pet based the body that is posted
+    This endpoint will update an Inventory based the body that is posted
     """
-    app.logger.info('Request to update pet with id: %s', pet_id)
+    app.logger.info('Request to update Inventory with id: %s', inventory_id)
     check_content_type('application/json')
-    pet = Pet.find(pet_id)
-    if not pet:
-        raise NotFound("Pet with id '{}' was not found.".format(pet_id))
-    pet.deserialize(request.get_json())
-    pet.id = pet_id
-    pet.save()
-    return make_response(jsonify(pet.serialize()), status.HTTP_200_OK)
+    inventory = Inventory.find(inventory_id)
+    if not inventory:
+        raise NotFound("Inventory with id '{}' was not found.".format(inventory_id))
+    inventory.deserialize(request.get_json())
+    inventory.id = inventory_id
+    inventory.save()
+    return make_response(jsonify(inventory.serialize()), status.HTTP_200_OK)
 
 
 ######################################################################
-# DELETE A PET
+# DELETE INVENTORY
 ######################################################################
 @app.route('/inventory/<int:inventory_id>', methods=['DELETE'])
 def delete_inventory(inventory_id):
