@@ -143,21 +143,21 @@ def get_pets(pet_id):
 
 
 ######################################################################
-# ADD A NEW PET
+# ADD NEW INVENTORY
 ######################################################################
-@app.route('/pets', methods=['POST'])
-def create_pets():
+@app.route('/inventory', methods=['POST'])
+def create_inventory():
     """
-    Creates a Pet
-    This endpoint will create a Pet based the data in the body that is posted
+    Creates Inventory
+    This endpoint will create Inventory based the data in the body that is posted
     """
-    app.logger.info('Request to create a pet')
+    app.logger.info('Request to create a inventory')
     check_content_type('application/json')
-    pet = Pet()
-    pet.deserialize(request.get_json())
-    pet.save()
-    message = pet.serialize()
-    location_url = url_for('get_pets', pet_id=pet.id, _external=True)
+    inventory = Inventory()
+    inventory.deserialize(request.get_json())
+    inventory.save()
+    message = inventory.serialize()
+    location_url = url_for('get_inventory', inventory_id=inventory.id, _external=True)
     return make_response(jsonify(message), status.HTTP_201_CREATED,
                          {
                              'Location': location_url
