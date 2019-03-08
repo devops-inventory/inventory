@@ -118,6 +118,12 @@ def list_inventory():
         inventory = Inventory.find_by_category(category)
     elif name:
         inventory = Inventory.find_by_name(name)
+    elif condition:
+        inventory = Inventory.find_by_condition(condition)
+    elif count:
+        inventory = Inventory.find_by_count(count)
+    elif availability:
+        inventory = Inventory.find_by_availability(available)
     else:
         inventory = Inventory.all()
 
