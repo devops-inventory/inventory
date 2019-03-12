@@ -1,2 +1,2 @@
-from tests.test_pets import TestPets
-from tests.test_server import TestPetServer
+from tests.test_inventorys import TestInventorys
+from tests.test_server import TestInventoryServer
