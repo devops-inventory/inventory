@@ -126,7 +126,7 @@ class Inventory(db.Model):
     @classmethod
     def find_or_404(cls, inventory_id):
         """ Find Inventory by it's id """
-        cls.logger.info('Processing lookup or 404 for id %s ...', pet_id)
+        cls.logger.info('Processing lookup or 404 for id %s ...', inventory_id)
         return cls.query.get_or_404(inventory_id)
 
     @classmethod
@@ -152,10 +152,10 @@ class Inventory(db.Model):
     @classmethod
     def find_by_availability(cls, available=True):
         """ Query that finds Inventory by their availability """
-        """ Returns Inventory Pets by their availability
+        """ Returns Pets by their availability
 
         Args:
-            available (boolean): True for pets that are available
+            available (boolean): True for inventorys that are available
         """
         cls.logger.info('Processing available query for %s ...', available)
         return cls.query.filter(cls.available == available)
