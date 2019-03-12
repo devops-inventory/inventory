@@ -77,7 +77,7 @@ class TestInventory(unittest.TestCase):
 
     def test_update_a_inventory(self):
         """ Update Inventory """
-        inventory = Pet(name="tool", category="widget1", available=True)
+        inventory = Inventory(name="tool", category="widget1", available=True)
         inventory.save()
         self.assertEqual(inventory.id, 1)
         # Change it an save it
