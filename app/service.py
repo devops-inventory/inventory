@@ -120,6 +120,7 @@ def list_inventory():
         inventory = Inventory.find_by_name(name)
     elif condition:
         inventory = Inventory.find_by_condition(condition)
+#This is the code for issue #10
     elif count:
         inventory = Inventory.find_by_count(count)
     elif availability:
