@@ -34,7 +34,7 @@ from werkzeug.exceptions import NotFound
 # For this example we'll use SQLAlchemy, a popular ORM that supports a
 # variety of backends including SQLite, MySQL, and PostgreSQL
 from flask_sqlalchemy import SQLAlchemy
-from models import Pet, DataValidationError
+from models import Inventory, DataValidationError
 
 # Import Flask application
 from . import app
@@ -214,7 +214,7 @@ def delete_inventory(inventory_id):
 def init_db():
     """ Initialies the SQLAlchemy app """
     global app
-    Pet.init_db(app)
+    Inventory.init_db(app)
 
 def check_content_type(content_type):
     """ Checks that the media type is correct """
