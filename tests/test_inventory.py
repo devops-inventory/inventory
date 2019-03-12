@@ -148,7 +148,7 @@ class TestInventory(unittest.TestCase):
         inventorys = Inventory.find_by_category("widget1")
         self.assertEqual(inventorys[0].category, "widget1")
         self.assertEqual(inventorys[0].name, "tools")
-        self.assertEqual(inventorys[0].available, False)
+        self.assertEqual(inventorys[0].available, True)
 
     def test_find_by_name(self):
         """ Find a inventory by Name """
@@ -165,4 +165,3 @@ class TestInventory(unittest.TestCase):
 ######################################################################
 if __name__ == '__main__':
     unittest.main()
-
