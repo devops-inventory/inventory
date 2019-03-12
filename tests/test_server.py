@@ -26,8 +26,8 @@ import os
 import logging
 from flask_api import status    # HTTP Status Codes
 #from mock import MagicMock, patch
-from app.models import Pet, DataValidationError, db
-from .pet_factory import PetFactory
+from app.models import Inventory, DataValidationError, db
+from .inventory_factory import InventoryFactory
 import app.service as service
 
 DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
@@ -35,8 +35,8 @@ DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
-class TestPetServer(unittest.TestCase):
-    """ Pet Server Tests """
+class TestInventoryServer(unittest.TestCase):
+    """ Inventory Server Tests """
 
     @classmethod
     def setUpClass(cls):
@@ -61,131 +61,131 @@ class TestPetServer(unittest.TestCase):
         db.session.remove()
         db.drop_all()
 
-    def _create_pets(self, count):
-        """ Factory method to create pets in bulk """
-        pets = []
+    def _create_inventorys(self, count):
+        """ Factory method to create inventorys in bulk """
+        inventorys = []
         for _ in range(count):
-            test_pet = PetFactory()
-            resp = self.app.post('/pets',
+            test_inventorys = InventoryFactory()
+            resp = self.app.post('/inventorys',
                                  json=test_pet.serialize(),
                                  content_type='application/json')
-            self.assertEqual(resp.status_code, status.HTTP_201_CREATED, 'Could not create test pet')
-            new_pet = resp.get_json()
-            test_pet.id = new_pet['id']
-            pets.append(test_pet)
-        return pets
+            self.assertEqual(resp.status_code, status.HTTP_201_CREATED, 'Could not create test inventory')
+            new_inventory = resp.get_json()
+            test_inventory.id = new_inventory['id']
+            inventorys.append(test_inventory)
+        return inventory
 
     def test_index(self):
         """ Test the Home Page """
         resp = self.app.get('/')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data['name'], 'Pet Demo REST API Service')
+        self.assertEqual(data['name'], 'Inventory Demo REST API Service')
 
-    def test_get_pet_list(self):
-        """ Get a list of Pets """
-        self._create_pets(5)
-        resp = self.app.get('/pets')
+    def test_get_inventory_list(self):
+        """ Get a list of Inventorys """
+        self._create_inventorys(5)
+        resp = self.app.get('/inventorys')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 5)
 
-    def test_get_pet(self):
-        """ Get a single Pet """
-        # get the id of a pet
-        test_pet = self._create_pets(1)[0]
-        resp = self.app.get('/pets/{}'.format(test_pet.id),
+    def test_get_inventory(self):
+        """ Get a single Inventory """
+        # get the id of a inventory
+        test_inventory = self._create_inventorys(1)[0]
+        resp = self.app.get('/inventorys/{}'.format(test_inventory.id),
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data['name'], test_pet.name)
+        self.assertEqual(data['name'], test_inventory.name)
 
-    def test_get_pet_not_found(self):
-        """ Get a Pet thats not found """
-        resp = self.app.get('/pets/0')
+    def test_get_inventory_not_found(self):
+        """ Get a Inventory thats not found """
+        resp = self.app.get('/inventorys/0')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_create_pet(self):
-        """ Create a new Pet """
-        test_pet = PetFactory()
-        resp = self.app.post('/pets',
-                             json=test_pet.serialize(),
+    def test_create_inventory(self):
+        """ Create a new Inventory """
+        test_inventory = InventoryFactory()
+        resp = self.app.post('/inventorys',
+                             json=test_inventory.serialize(),
                              content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         # Make sure location header is set
         location = resp.headers.get('Location', None)
         self.assertTrue(location != None)
         # Check the data is correct
-        new_pet = resp.get_json()
-        self.assertEqual(new_pet['name'], test_pet.name, "Names do not match")
-        self.assertEqual(new_pet['category'], test_pet.category, "Categories do not match")
-        self.assertEqual(new_pet['available'], test_pet.available, "Availability does not match")
+        new_inventory = resp.get_json()
+        self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
+        self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
+        self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
         # Check that the location header was correct
         resp = self.app.get(location,
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        new_pet = resp.get_json()
-        self.assertEqual(new_pet['name'], test_pet.name, "Names do not match")
-        self.assertEqual(new_pet['category'], test_pet.category, "Categories do not match")
-        self.assertEqual(new_pet['available'], test_pet.available, "Availability does not match")
+        new_inventory = resp.get_json()
+        self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
+        self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
+        self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
 
-    def test_update_pet(self):
-        """ Update an existing Pet """
-        # create a pet to update
-        test_pet = PetFactory()
-        resp = self.app.post('/pets',
-                             json=test_pet.serialize(),
+    def test_update_inventory(self):
+        """ Update an existing Inventory """
+        # create a inventory to update
+        test_inventory = InventoryFactory()
+        resp = self.app.post('/inventory',
+                             json=test_inventory.serialize(),
                              content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-        # update the pet
-        new_pet = resp.get_json()
-        new_pet['category'] = 'unknown'
-        resp = self.app.put('/pets/{}'.format(new_pet['id']),
-                            json=new_pet,
+        # update the inventory
+        new_inventory = resp.get_json()
+        new_inventory['category'] = 'unknown'
+        resp = self.app.put('/inventorys/{}'.format(new_pet['id']),
+                            json=new_inventory,
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        updated_pet = resp.get_json()
-        self.assertEqual(updated_pet['category'], 'unknown')
+        updated_inventory = resp.get_json()
+        self.assertEqual(updated_inventory['category'], 'unknown')
 
-    def test_delete_pet(self):
-        """ Delete a Pet """
-        test_pet = self._create_pets(1)[0]
-        resp = self.app.delete('/pets/{}'.format(test_pet.id),
+    def test_delete_inventory(self):
+        """ Delete a Inventory """
+        test_inventory = self._create_inventorys(1)[0]
+        resp = self.app.delete('/inventorys/{}'.format(test_inventory.id),
                                content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
         # make sure they are deleted
-        resp = self.app.get('/pets/{}'.format(test_pet.id),
+        resp = self.app.get('/inventorys/{}'.format(test_inventory.id),
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_query_pet_list_by_category(self):
-        """ Query Pets by Category """
-        pets = self._create_pets(10)
-        test_category = pets[0].category
-        category_pets = [pet for pet in pets if pet.category == test_category]
-        resp = self.app.get('/pets',
+    def test_query_inventory_list_by_category(self):
+        """ Query Inventorys by Category """
+        inventorys = self._create_inventorys(10)
+        test_category = inventorys[0].category
+        category_inventorys = [inventory for inventory in inventorys if inventory.category == test_category]
+        resp = self.app.get('/inventorys',
                             query_string='category={}'.format(test_category))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(len(data), len(category_pets))
+        self.assertEqual(len(data), len(category_inventorys))
         # check the data just to be sure
-        for pet in data:
-            self.assertEqual(pet['category'], test_category)
+        for inventory in data:
+            self.assertEqual(inventory['category'], test_category)
 
-    # @patch('app.service.Pet.find_by_name')
+    # @patch('app.service.Inventory.find_by_name')
     # def test_bad_request(self, bad_request_mock):
     #     """ Test a Bad Request error from Find By Name """
     #     bad_request_mock.side_effect = DataValidationError()
-    #     resp = self.app.get('/pets', query_string='name=fido')
+    #     resp = self.app.get('/inventorys', query_string='name=fido')
     #     self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
     #
-    # @patch('app.service.Pet.find_by_name')
-    # def test_mock_search_data(self, pet_find_mock):
+    # @patch('app.service.Inventory.find_by_name')
+    # def test_mock_search_data(self, inventory_find_mock):
     #     """ Test showing how to mock data """
-    #     pet_find_mock.return_value = [MagicMock(serialize=lambda: {'name': 'fido'})]
-    #     resp = self.app.get('/pets', query_string='name=fido')
+    #     inventory_find_mock.return_value = [MagicMock(serialize=lambda: {'name': 'fido'})]
+    #     resp = self.app.get('/inventorys', query_string='name=fido')
     #     self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
 
