@@ -55,7 +55,7 @@ class TestInventory(unittest.TestCase):
 
     def test_create_a_inventory(self):
         """ Create inventory and assert that it exists """
-        inventory = Inventory(name="tool", category="widget1", available=True)
+        inventory = Inventory(name="tools", category="widget1", available=True)
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         self.assertEqual(inventory.name, "tools")
@@ -66,7 +66,7 @@ class TestInventory(unittest.TestCase):
         """ Create a inventory and add it to the database """
         inventorys = Inventory.all()
         self.assertEqual(inventorys, [])
-        inventory = Inventory(name="tool", category="widget1", available=True)
+        inventory = Inventory(name="tools", category="widget1", available=True)
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         inventory.save()
@@ -115,7 +115,7 @@ class TestInventory(unittest.TestCase):
 
     def test_deserialize_a_inventory(self):
         """ Test deserialization of a Inventory """
-        data = {"id": 1, "name": "materials", "category": "widget2", "available": True}
+        data = {"id": 1, "name": "materials", "category": "widget2", "available": True, "count":1,"condition":"new"}
         inventory = Inventory()
         inventory.deserialize(data)
         self.assertNotEqual(inventory, None)
