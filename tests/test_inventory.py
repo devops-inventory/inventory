@@ -54,8 +54,10 @@ class TestInventory(unittest.TestCase):
         db.drop_all()
 
     def test_create_a_inventory(self):
+        testcases_new_attributes
         """ Create inventory and assert that it exists """
         inventory = Inventory(name="tools", category="widget1", available=True)
+        master
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         self.assertEqual(inventory.name, "tools")
@@ -155,7 +157,6 @@ class TestInventory(unittest.TestCase):
         Inventory(name="tools", category="widget1", available=True).save()
         Inventory(name="materials", category="widget2", available=False).save()
         inventorys = Inventory.find_by_name("tools")
-
         self.assertEqual(inventorys[0].category, "widget1")
         self.assertEqual(inventorys[0].name, "tools")
         self.assertEqual(inventorys[0].available, True)
@@ -168,7 +169,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory[0].category, "widget1")
         self.assertEqual(inventory[0].name, "tools")
         self.assertEqual(inventory[0].available, True)
-        self.assertEqual(inventory[0].name, 1)
+        self.assertEqual(inventory[0].count, 1)
 
     def test_find_by_condition(self):
         """ Find an inventory by Condition """
@@ -178,7 +179,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory[0].category, "widget1")
         self.assertEqual(inventory[0].name, "tools")
         self.assertEqual(inventory[0].available, True)
-        self.assertEqual(inventory[0].available, "good")
+        self.assertEqual(inventory[0].condition, "good")
 
 ######################################################################
 #   M A I N
