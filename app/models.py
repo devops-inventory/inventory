@@ -167,8 +167,8 @@ class Inventory(db.Model):
         Args:
             condition (string): the condition of the Inventory you want to match
         """
-        cls.logger.info('Processing category query for %s ...', category)
-        return cls.query.filter(cls.category == category)
+        cls.logger.info('Processing category query for %s ...', condition)
+        return cls.query.filter(cls.condition == condition)
 
 
     @classmethod

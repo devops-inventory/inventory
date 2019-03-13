@@ -54,10 +54,8 @@ class TestInventory(unittest.TestCase):
         db.drop_all()
 
     def test_create_a_inventory(self):
-        testcases_new_attributes
         """ Create inventory and assert that it exists """
         inventory = Inventory(name="tools", category="widget1", available=True)
-        master
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         self.assertEqual(inventory.name, "tools")
