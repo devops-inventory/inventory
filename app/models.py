@@ -167,7 +167,7 @@ class Inventory(db.Model):
         Args:
             condition (string): the condition of the Inventory you want to match
         """
-        cls.logger.info('Processing category query for %s ...', condition)
+        cls.logger.info('Processing condition query for %s ...', condition)
         return cls.query.filter(cls.condition == condition)
 
 
@@ -176,7 +176,7 @@ class Inventory(db.Model):
         """ Returns all of the Inventory of a certain count
 
         Args:
-            count (int): the condition of the Inventory you want to match
+            count (int): the count of the Inventory you want to match
         """
-        cls.logger.info('Processing category query for %s ...', category)
-        return cls.query.filter(cls.category == category)
+        cls.logger.info('Processing count query for %s ...', count)
+        return cls.query.filter(cls.count == count)
