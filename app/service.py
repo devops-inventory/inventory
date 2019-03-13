@@ -114,13 +114,15 @@ def list_inventory():
     inventory = []
     category = request.args.get('category')
     name = request.args.get('name')
+    condition = request.args.get('condition')
+    count = request.args.get('count')
+    availability = request.args.get('available')
     if category:
         inventory = Inventory.find_by_category(category)
     elif name:
         inventory = Inventory.find_by_name(name)
     elif condition:
         inventory = Inventory.find_by_condition(condition)
-#This is the code for issue #10
     elif count:
         inventory = Inventory.find_by_count(count)
     elif availability:
