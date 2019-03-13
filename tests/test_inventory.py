@@ -103,13 +103,13 @@ class TestInventory(unittest.TestCase):
 
     def test_serialize_a_inventory(self):
         """ Test serialization of a Inventory """
-        inventory = Inventory(name="tool", category="widget1", available=False)
+        inventory = Inventory(name="tools", category="widget1", available=False)
         data = inventory.serialize()
         self.assertNotEqual(data, None)
         self.assertIn('id', data)
         self.assertEqual(data['id'], None)
         self.assertIn('name', data)
-        self.assertEqual(data['name'], "tool")
+        self.assertEqual(data['name'], "tools")
         self.assertIn('category', data)
         self.assertEqual(data['category'], "widget1")
         self.assertIn('available', data)
@@ -157,9 +157,10 @@ class TestInventory(unittest.TestCase):
         Inventory(name="tools", category="widget1", available=True).save()
         Inventory(name="materials", category="widget2", available=False).save()
         inventorys = Inventory.find_by_name("tools")
-        self.assertEqual(inventory[0].category, "widget1")
-        self.assertEqual(inventory[0].name, "tools")
-        self.assertEqual(inventory[0].available, True)
+
+        self.assertEqual(inventorys[0].category, "widget1")
+        self.assertEqual(inventorys[0].name, "tools")
+        self.assertEqual(inventorys[0].available, True)
 
     def test_find_by_count(self):
         """ Find an inventory by Count """

@@ -65,27 +65,27 @@ class TestInventoryServer(unittest.TestCase):
         """ Factory method to create inventorys in bulk """
         inventorys = []
         for _ in range(count):
-            test_inventorys = InventoryFactory()
-            resp = self.app.post('/inventorys',
-                                 json=test_pet.serialize(),
+            test_inventory = InventoryFactory()
+            resp = self.app.post('/inventory',
+                                 json=test_inventory.serialize(),
                                  content_type='application/json')
             self.assertEqual(resp.status_code, status.HTTP_201_CREATED, 'Could not create test inventory')
             new_inventory = resp.get_json()
             test_inventory.id = new_inventory['id']
             inventorys.append(test_inventory)
-        return inventory
+        return inventorys
 
     def test_index(self):
         """ Test the Home Page """
         resp = self.app.get('/')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data['name'], 'Inventory Demo REST API Service')
+        self.assertEqual(data['name'], 'Inventory REST API Service')
 
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
         self._create_inventorys(5)
-        resp = self.app.get('/inventorys')
+        resp = self.app.get('/inventory')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 5)
@@ -94,7 +94,7 @@ class TestInventoryServer(unittest.TestCase):
         """ Get a single Inventory """
         # get the id of a inventory
         test_inventory = self._create_inventorys(1)[0]
-        resp = self.app.get('/inventorys/{}'.format(test_inventory.id),
+        resp = self.app.get('/inventory/{}'.format(test_inventory.id),
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
@@ -102,13 +102,13 @@ class TestInventoryServer(unittest.TestCase):
 
     def test_get_inventory_not_found(self):
         """ Get a Inventory thats not found """
-        resp = self.app.get('/inventorys/0')
+        resp = self.app.get('/inventory/0')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_inventory(self):
         """ Create a new Inventory """
         test_inventory = InventoryFactory()
-        resp = self.app.post('/inventorys',
+        resp = self.app.post('/inventory',
                              json=test_inventory.serialize(),
                              content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
@@ -141,7 +141,7 @@ class TestInventoryServer(unittest.TestCase):
         # update the inventory
         new_inventory = resp.get_json()
         new_inventory['category'] = 'unknown'
-        resp = self.app.put('/inventorys/{}'.format(new_pet['id']),
+        resp = self.app.put('/inventory/{}'.format(new_inventory['id']),
                             json=new_inventory,
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -151,12 +151,12 @@ class TestInventoryServer(unittest.TestCase):
     def test_delete_inventory(self):
         """ Delete a Inventory """
         test_inventory = self._create_inventorys(1)[0]
-        resp = self.app.delete('/inventorys/{}'.format(test_inventory.id),
+        resp = self.app.delete('/inventory/{}'.format(test_inventory.id),
                                content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
         # make sure they are deleted
-        resp = self.app.get('/inventorys/{}'.format(test_inventory.id),
+        resp = self.app.get('/inventory/{}'.format(test_inventory.id),
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
