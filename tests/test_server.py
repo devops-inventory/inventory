@@ -165,7 +165,7 @@ class TestInventoryServer(unittest.TestCase):
         inventorys = self._create_inventorys(10)
         test_category = inventorys[0].category
         category_inventorys = [inventory for inventory in inventorys if inventory.category == test_category]
-        resp = self.app.get('/inventorys',
+        resp = self.app.get('/inventory',
                             query_string='category={}'.format(test_category))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
