@@ -54,21 +54,20 @@ class TestInventory(unittest.TestCase):
         db.drop_all()
 
     def test_create_a_inventory(self):
-        testcases_new_attributes
         """ Create inventory and assert that it exists """
-        inventory = Inventory(name="tools", category="widget1", available=True)
-        master
+        inventory = Inventory(name="tools", category="widget1", available=True, condition="new")
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         self.assertEqual(inventory.name, "tools")
         self.assertEqual(inventory.category, "widget1")
         self.assertEqual(inventory.available, True)
+        self.assertEqual(inventory.condition, "new")
 
     def test_add_a_inventory(self):
         """ Create an inventory and add it to the database """
         inventorys = Inventory.all()
         self.assertEqual(inventorys, [])
-        inventory = Inventory(name="tools", category="widget1", available=True)
+        inventory = Inventory(name="tools", category="widget1", available=True, condition="new")
         self.assertTrue(inventory != None)
         self.assertEqual(inventory.id, None)
         inventory.save()
@@ -79,7 +78,7 @@ class TestInventory(unittest.TestCase):
 
     def test_update_a_inventory(self):
         """ Update an Inventory """
-        inventory = Inventory(name="tool", category="widget1", available=True)
+        inventory = Inventory(name="tool", category="widget1", available=True,condition="new")
         inventory.save()
         self.assertEqual(inventory.id, 1)
         # Change it an save it
@@ -88,13 +87,13 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory.id, 1)
         # Fetch it back and make sure the id hasn't changed
         # but the data did change
-        inventorys = Inventory.all()
-        self.assertEqual(len(inventorys), 1)
-        self.assertEqual(inventorys[0].category, "jkwidget2")
+        inventory = Inventory.all()
+        self.assertEqual(len(inventory), 1)
+        self.assertEqual(inventory[0].category, "jkwidget2")
 
     def test_delete_a_inventory(self):
         """ Delete an inventory """
-        inventory = Inventory(name="tools", category="widget1", available=True)
+        inventory = Inventory(name="tools", category="widget1", available=True,condition="new")
         inventory.save()
         self.assertEqual(len(Inventory.all()), 1)
         # delete the inventory and make sure it isn't in the database
@@ -103,7 +102,7 @@ class TestInventory(unittest.TestCase):
 
     def test_serialize_a_inventory(self):
         """ Test serialization of a Inventory """
-        inventory = Inventory(name="tools", category="widget1", available=False)
+        inventory = Inventory(name="tools", category="widget1", available=False, condition="new")
         data = inventory.serialize()
         self.assertNotEqual(data, None)
         self.assertIn('id', data)
@@ -114,6 +113,8 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(data['category'], "widget1")
         self.assertIn('available', data)
         self.assertEqual(data['available'], False)
+        self.assertIn('condition', data)
+        self.assertEqual(data['condition'], "new")
 
     def test_deserialize_a_inventory(self):
         """ Test deserialization of a Inventory """
@@ -134,52 +135,57 @@ class TestInventory(unittest.TestCase):
 
     def test_find_inventory(self):
         """ Find an Inventory by ID """
-        Inventory(name="tool", category="widget1", available=True).save()
-        materials = Inventory(name="materials", category="widget2", available=False)
+        Inventory(name="tool", category="widget1", available=True,condition="new").save()
+        materials = Inventory(name="materials", category="widget2", available=False,condition="old")
         materials.save()
         inventory = Inventory.find(materials.id)
         self.assertIsNot(inventory, None)
         self.assertEqual(inventory.id, inventory.id)
         self.assertEqual(inventory.name, "materials")
         self.assertEqual(inventory.available, False)
+        self.assertEqual(inventory.condition, "old")
 
     def test_find_by_category(self):
         """ Find an Inventory by Category """
-        Inventory(name="tools", category="widget1", available=True).save()
-        Inventory(name="materials", category="widget2", available=False).save()
-        inventorys = Inventory.find_by_category("widget1")
-        self.assertEqual(inventorys[0].category, "widget1")
-        self.assertEqual(inventorys[0].name, "tools")
-        self.assertEqual(inventorys[0].available, True)
+        Inventory(name="tools", category="widget1", available=True,condition="new").save()
+        Inventory(name="materials", category="widget2", available=False,condition="old").save()
+        inventory = Inventory.find_by_category("widget1")
+        self.assertEqual(inventory[0].category, "widget1")
+        self.assertEqual(inventory[0].name, "tools")
+        self.assertEqual(inventory[0].available, True)
+        self.assertEqual(inventory[0].condition, "new")
+
+    def test_find_by_count(self):
+        """ Find an Inventory by Count """
+        Inventory(name="tools", category="widget1", available=True, condition="new",count=1).save()
+        Inventory(name="materials", category="widget2", available=False, condition="old",count=2).save()
+        inventory = Inventory.find_by_count(1)
+        self.assertEqual(inventory[0].category, "widget1")
+        self.assertEqual(inventory[0].name, "tools")
+        self.assertEqual(inventory[0].available, True)
+        self.assertEqual(inventory[0].condition, "new")
+        self.assertEqual(inventory[0].count, 1)
+
 
     def test_find_by_name(self):
         """ Find an inventory by Name """
         Inventory(name="tools", category="widget1", available=True).save()
         Inventory(name="materials", category="widget2", available=False).save()
-        inventorys = Inventory.find_by_name("tools")
-        self.assertEqual(inventorys[0].category, "widget1")
-        self.assertEqual(inventorys[0].name, "tools")
-        self.assertEqual(inventorys[0].available, True)
-
-    def test_find_by_count(self):
-        """ Find an inventory by Count """
-        Inventory(name="tools", category="widget1", available=True, count = 1).save()
-        Inventory(name="materials", category="widget2", available=False, count = 2).save()
-        inventorys = Inventory.find_by_count(1)
+        inventory = Inventory.find_by_name("tools")
         self.assertEqual(inventory[0].category, "widget1")
         self.assertEqual(inventory[0].name, "tools")
         self.assertEqual(inventory[0].available, True)
-        self.assertEqual(inventory[0].count, 1)
+
 
     def test_find_by_condition(self):
         """ Find an inventory by Condition """
-        Inventory(name="tools", category="widget1", available=True, condition="good").save()
-        Inventory(name="materials", category="widget2", available=False, condition="bad").save()
-        inventorys = Inventory.find_by_condition("good")
+        Inventory(name="tools", category="widget1", available=True, condition="new").save()
+        Inventory(name="materials", category="widget2", available=False, condition="old").save()
+        inventory = Inventory.find_by_condition("new")
         self.assertEqual(inventory[0].category, "widget1")
         self.assertEqual(inventory[0].name, "tools")
         self.assertEqual(inventory[0].available, True)
-        self.assertEqual(inventory[0].condition, "good")
+        self.assertEqual(inventory[0].condition, "new")
 
 ######################################################################
 #   M A I N
