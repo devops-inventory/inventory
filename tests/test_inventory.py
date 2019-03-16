@@ -21,25 +21,27 @@ Test cases can be run with:
 """
 
 import unittest
+import mock
 import os
+import logging
 from app.models import Inventory, DataValidationError, db
 from app import app
 
 DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
 
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 class TestInventory(unittest.TestCase):
-    """ Test Cases for Inventory """
-
+    """ Test Cases for Inventory """        
     @classmethod
     def setUpClass(cls):
         """ These run once per Test suite """
         app.debug = False
         # Set up the test database
         app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
-
+        
     @classmethod
     def tearDownClass(cls):
         pass
@@ -48,11 +50,12 @@ class TestInventory(unittest.TestCase):
         Inventory.init_db(app)
         db.drop_all()    # clean up the last tests
         db.create_all()  # make our sqlalchemy tables
+        self.app = app.test_client()
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
-
+        
     def test_create_a_inventory(self):
         """ Create inventory and assert that it exists """
         inventory = Inventory(name="tools", category="widget1", available=True, condition="new")
@@ -133,6 +136,12 @@ class TestInventory(unittest.TestCase):
         inventory = Inventory()
         self.assertRaises(DataValidationError, inventory.deserialize, data)
 
+    def test_deserialize_bad_data_key(self):
+        """ Test deserialization of bad data #2 """
+        data = "another"
+        inventory = Inventory()
+        self.assertRaises(DataValidationError, inventory.deserialize, data)
+
     def test_find_inventory(self):
         """ Find an Inventory by ID """
         Inventory(name="tool", category="widget1", available=True,condition="new").save()
@@ -140,7 +149,19 @@ class TestInventory(unittest.TestCase):
         materials.save()
         inventory = Inventory.find(materials.id)
         self.assertIsNot(inventory, None)
-        self.assertEqual(inventory.id, inventory.id)
+        self.assertEqual(inventory.id, materials.id)
+        self.assertEqual(inventory.name, "materials")
+        self.assertEqual(inventory.available, False)
+        self.assertEqual(inventory.condition, "old")
+
+    def test_find_or_404(self):
+        """ Find an Inventory by ID """
+        Inventory(name="tool", category="widget1", available=True,condition="new").save()
+        materials = Inventory(name="materials", category="widget2", available=False,condition="old")
+        materials.save()
+        inventory = Inventory.find_or_404(materials.id)
+        self.assertIsNot(inventory, None)
+        self.assertEqual(inventory.id, materials.id)
         self.assertEqual(inventory.name, "materials")
         self.assertEqual(inventory.available, False)
         self.assertEqual(inventory.condition, "old")
@@ -186,6 +207,17 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory[0].name, "tools")
         self.assertEqual(inventory[0].available, True)
         self.assertEqual(inventory[0].condition, "new")
+
+    def test_find_by_availability(self):
+        """ Find an inventory by Condition """
+        Inventory(name="tools", category="widget1", available=True, condition="new").save()
+        Inventory(name="materials", category="widget2", available=False, condition="old").save()
+        inventory = Inventory.find_by_availability(True)
+        self.assertEqual(inventory[0].category, "widget1")
+        self.assertEqual(inventory[0].name, "tools")
+        self.assertEqual(inventory[0].available, True)
+        self.assertEqual(inventory[0].condition, "new")
+
 
 ######################################################################
 #   M A I N
