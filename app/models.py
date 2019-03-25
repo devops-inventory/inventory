@@ -53,8 +53,8 @@ class Inventory(db.Model):
     name = db.Column(db.String(63))
     category = db.Column(db.String(63))
     available = db.Column(db.Boolean())
-    condition = name = db.Column(db.String(63))
-    count = name = db.Column(db.Integer)
+    condition = db.Column(db.String(63))
+    count = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Inventory %r>' % (self.name)
@@ -78,8 +78,8 @@ class Inventory(db.Model):
                 "name": self.name,
                 "category": self.category,
                 "available": self.available,
-                "condition": self.available,
-                "count": self.available}
+                "condition": self.condition,
+                "count": self.count}
 
     def deserialize(self, data):
         """

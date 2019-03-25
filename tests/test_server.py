@@ -21,6 +21,7 @@ Test cases can be run with the following:
   codecov --token=$CODECOV_TOKEN
 """
 
+import mock
 import unittest
 import os
 import logging
@@ -120,6 +121,7 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
         self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
         self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
+        self.assertEqual(new_inventory['condition'], test_inventory.condition, "Condition does not match")
         # Check that the location header was correct
         resp = self.app.get(location,
                             content_type='application/json')
@@ -128,6 +130,7 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
         self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
         self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
+        self.assertEqual(new_inventory['condition'], test_inventory.condition, "Condition does not match")
 
     def test_update_inventory(self):
         """ Update an existing Inventory """
@@ -165,7 +168,7 @@ class TestInventoryServer(unittest.TestCase):
         inventorys = self._create_inventorys(10)
         test_category = inventorys[0].category
         category_inventorys = [inventory for inventory in inventorys if inventory.category == test_category]
-        resp = self.app.get('/inventorys',
+        resp = self.app.get('/inventory',
                             query_string='category={}'.format(test_category))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
@@ -174,20 +177,33 @@ class TestInventoryServer(unittest.TestCase):
         for inventory in data:
             self.assertEqual(inventory['category'], test_category)
 
-    # @patch('app.service.Inventory.find_by_name')
-    # def test_bad_request(self, bad_request_mock):
-    #     """ Test a Bad Request error from Find By Name """
-    #     bad_request_mock.side_effect = DataValidationError()
-    #     resp = self.app.get('/inventorys', query_string='name=fido')
-    #     self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-    #
-    # @patch('app.service.Inventory.find_by_name')
-    # def test_mock_search_data(self, inventory_find_mock):
-    #     """ Test showing how to mock data """
-    #     inventory_find_mock.return_value = [MagicMock(serialize=lambda: {'name': 'fido'})]
-    #     resp = self.app.get('/inventorys', query_string='name=fido')
-    #     self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    @mock.patch('app.service.Inventory.find_by_name')
+    def test_bad_request(self, bad_request_mock):
+         """ Test a Bad Request error from Find By Name """
+         bad_request_mock.side_effect = DataValidationError()
+         resp = self.app.get('/inventory', query_string='name=widget1')
+         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
+    @mock.patch('app.service.Inventory.find_by_name')
+    def test_method_not_supported(self, method_mock):
+         """ Handles unsuppoted HTTP methods with 405_METHOD_NOT_SUPPORTED """
+         method_mock.side_effect = None
+         resp = self.app.put('/inventory', query_string='name=widget1')
+         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @mock.patch('app.service.Inventory.find_by_name')
+    def test_mediatype_not_supported(self, media_mock):
+         """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
+         media_mock.side_effect = DataValidationError()
+         resp = self.app.post('/inventory', query_string='name=widget1')
+         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+         
+    @mock.patch('app.service.Inventory.find_by_name')
+    def test_search_bad_data(self, inventory_find_mock):
+        """ Test a search that returns bad data """
+        inventory_find_mock.return_value = None
+        resp = self.app.get('/inventory', query_string='name=widget1')
+        self.assertEqual(resp.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 ######################################################################
 #   M A I N

@@ -49,7 +49,7 @@ def request_validation_error(error):
 
 @app.errorhandler(status.HTTP_400_BAD_REQUEST)
 def bad_request(error):
-    """ Handles bad reuests with 400_BAD_REQUEST """
+    """ Handles bad requests with 400_BAD_REQUEST """
     message = error.message or str(error)
     app.logger.warning(message)
     return jsonify(status=status.HTTP_400_BAD_REQUEST,
@@ -114,13 +114,15 @@ def list_inventory():
     inventory = []
     category = request.args.get('category')
     name = request.args.get('name')
+    condition = request.args.get('condition')
+    count = request.args.get('count')
+    availability = request.args.get('available')
     if category:
         inventory = Inventory.find_by_category(category)
     elif name:
         inventory = Inventory.find_by_name(name)
     elif condition:
         inventory = Inventory.find_by_condition(condition)
-#This is the code for issue #10
     elif count:
         inventory = Inventory.find_by_count(count)
     elif availability:
