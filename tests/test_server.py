@@ -183,7 +183,7 @@ class TestInventoryServer(unittest.TestCase):
          bad_request_mock.side_effect = DataValidationError()
          resp = self.app.get('/inventory', query_string='name=widget1')
          self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-
+         
     @mock.patch('app.service.Inventory.find_by_name')
     def test_method_not_supported(self, method_mock):
          """ Handles unsuppoted HTTP methods with 405_METHOD_NOT_SUPPORTED """
@@ -195,7 +195,7 @@ class TestInventoryServer(unittest.TestCase):
     def test_mediatype_not_supported(self, media_mock):
          """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
          media_mock.side_effect = DataValidationError()
-         resp = self.app.post('/inventory', query_string='name=widget1')
+         resp = self.app.post('/inventory', query_string='name=widget1', content_type='application/pdf')
          self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
          
     @mock.patch('app.service.Inventory.find_by_name')
