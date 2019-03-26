@@ -23,7 +23,8 @@ Inventory - A SKU that is currently in stock by our e-commerce store
 Attributes:
 -----------
 name(string) - the name of the product
-category (string) - the category the product belongs to (i.e., food, apparel, accessories, games, kitchenware)
+category (string) - the category the product belongs to
+(i.e., food, apparel, accessories, games, kitchenware)
 available (boolean) - True for products that are currently in stock
 condition (string) - The quality of the product's state (i.e. new, used, poor)
 count (int) - The quantity in stock
@@ -155,8 +156,7 @@ class Inventory(db.Model):
         """ Returns Pets by their availability
 
         Args:
-            available (boolean): True for inventorys that are available
-        """
+            available (boolean): True for inventorys that are available"""
         cls.logger.info('Processing available query for %s ...', available)
         return cls.query.filter(cls.available == available)
 
