@@ -34,7 +34,7 @@ from werkzeug.exceptions import NotFound
 # For this example we'll use SQLAlchemy, a popular ORM that supports a
 # variety of backends including SQLite, MySQL, and PostgreSQL
 from flask_sqlalchemy import SQLAlchemy
-from models import Inventory, DataValidationError
+from app.models import Inventory, DataValidationError
 
 # Import Flask application
 from . import app
@@ -116,7 +116,7 @@ def list_inventory():
     name = request.args.get('name')
     condition = request.args.get('condition')
     count = request.args.get('count')
-    availability = request.args.get('available')
+    available = request.args.get('available')
     if category:
         inventory = Inventory.find_by_category(category)
     elif name:
@@ -125,7 +125,7 @@ def list_inventory():
         inventory = Inventory.find_by_condition(condition)
     elif count:
         inventory = Inventory.find_by_count(count)
-    elif availability:
+    elif available:
         inventory = Inventory.find_by_availability(available)
     else:
         inventory = Inventory.all()
