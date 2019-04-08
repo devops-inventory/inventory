@@ -1,6 +1,6 @@
 # lab-flask-tdd
 
-[![Build Status](https://travis-ci.org/nyu-devops/lab-flask-tdd.svg?branch=master)](https://travis-ci.org/nyu-devops/lab-flask-tdd)
+[![Build Status](https://travis-ci.org/devops-inventory/inventory.svg?branch=master)](https://travis-ci.org/devops-inventory/inventory)
 [![codecov](https://codecov.io/gh/devops-inventory/inventory/branch/master/graph/badge.svg)](https://codecov.io/gh/devops-inventory/inventory)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
