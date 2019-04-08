@@ -83,6 +83,12 @@ class TestInventoryServer(unittest.TestCase):
         data = resp.get_json()
         self.assertEqual(data['name'], 'Inventory REST API Service')
 
+    def test_restart(self):
+        """ Test restart """
+        resp = self.app.put('/restart')
+        self.assertEqual(resp.status_code,status.HTTP_200_OK)
+
+        
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
         self._create_inventorys(5)
