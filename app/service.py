@@ -21,6 +21,7 @@ GET /inventory - Returns a list all of the Inventory
 GET /inventory/{id} - Returns the Inventory with a given id number
 POST /inventory - creates a new Inventory record in the database
 PUT /inventory/{id} - updates an Inventory record in the database
+PUT /restart - restarts service
 DELETE /inventory/{id} - deletes an Inventory record in the database
 """
 
@@ -103,6 +104,20 @@ def index():
                    version='1.0',
                    paths=url_for('list_inventory', _external=True)
                   ), status.HTTP_200_OK
+
+
+######################################################################
+# RESTART
+######################################################################
+@app.route('/restart', methods=['PUT'])
+def restart():
+	try:
+		some_queue.put("something")
+		print "Restarted successfully"
+		return "Quit"
+	except: 
+		print "Failed in restart"
+		return "Failed"
 
 ######################################################################
 # LIST ALL INVENTORY
