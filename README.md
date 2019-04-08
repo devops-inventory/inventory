@@ -1,7 +1,7 @@
 # lab-flask-tdd
 
 [![Build Status](https://travis-ci.org/nyu-devops/lab-flask-tdd.svg?branch=master)](https://travis-ci.org/nyu-devops/lab-flask-tdd)
-[![Codecov](https://codecov.io/gh/nyu-devops/lab-flask-tdd/branch/master/graph/badge.svg)](https://codecov.io/gh/nyu-devops/lab-flask-tdd/branch/master/graph/badge.svg)
+[![codecov](https://codecov.io/gh/devops-inventory/inventory/branch/master/graph/badge.svg)](https://codecov.io/gh/devops-inventory/inventory)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 NYU DevOps lab on Test Driven Development
