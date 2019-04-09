@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
+Pet Model that uses Cloudant
+You must initlaize this class before use by calling inititlize().
+This class looks for an environment variable called VCAP_SERVICES
+to get it's database credentials from. If it cannot find one, it
+tries to connect to Cloudant on the localhost. If that fails it looks
+for a server name 'cloudant' to connect to.
+To use with Docker couchdb database use:
+    docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb
+Docker Note:
+    CouchDB uses /opt/couchdb/data to store its data, and is exposed as a volume
+    e.g., to use current folder add: -v $(pwd):/opt/couchdb/data
+    You can also use Docker volumes like this: -v couchdb_data:/opt/couchdb/data
 Models for Inventory Service
 
 All of the models are stored in this module
@@ -29,33 +41,40 @@ available (boolean) - True for products that are currently in stock
 condition (string) - The quality of the product's state (i.e. new, used, poor)
 count (int) - The quantity in stock
 """
+import os
+import json
 import logging
-from flask_sqlalchemy import SQLAlchemy
+from retry import retry
+from cloudant.client import Cloudant
+from cloudant.query import Query
+from requests import HTTPError, ConnectionError
 
-# Create the SQLAlchemy object to be initialized later in init_db()
-db = SQLAlchemy()
+# get configruation from enviuronment (12-factor)
+ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
+CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
+CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
+CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
 class DataValidationError(Exception):
-    """ Used for an data validation errors when deserializing """
+    """ Custom Exception with data validation fails """
     pass
 
-class Inventory(db.Model):
+class Inventory(object):
     """
-    Class that represents Inventory
-
-    This version uses a relational database for persistence which is hidden
-    from us by SQLAlchemy's object relational mappings (ORM)
+    Inventory interface to database
     """
     logger = logging.getLogger(__name__)
-    app = None
+    client = None   # cloudant.client.Cloudant
+    database = None # cloudant.database.CloudantDatabase
 
-    # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
-    category = db.Column(db.String(63))
-    available = db.Column(db.Boolean())
-    condition = db.Column(db.String(63))
-    count = db.Column(db.Integer)
+    def __init__(self, name=None, category=None, available=True, condition=Used, count=None):
+        """ Constructor """
+        self.id = None
+        self.name = name
+        self.category = category
+        self.available = available
+	self.condition = used
+	self.count = None
 
     def __repr__(self):
         return '<Inventory %r>' % (self.name)
