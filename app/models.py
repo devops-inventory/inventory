@@ -12,171 +12,280 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Models for Inventory Service
-
-All of the models are stored in this module
-
-Models
-------
-Inventory - A SKU that is currently in stock by our e-commerce store
-
-Attributes:
------------
-name(string) - the name of the product
-category (string) - the category the product belongs to
-(i.e., food, apparel, accessories, games, kitchenware)
-available (boolean) - True for products that are currently in stock
-condition (string) - The quality of the product's state (i.e. new, used, poor)
-count (int) - The quantity in stock
+Inventory Model that uses Cloudant
+You must initlaize this class before use by calling inititlize().
+This class looks for an environment variable called VCAP_SERVICES
+to get it's database credentials from. If it cannot find one, it
+tries to connect to Cloudant on the localhost. If that fails it looks
+for a server name 'cloudant' to connect to.
+To use with Docker couchdb database use:
+    docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb
+Docker Note:
+    CouchDB uses /opt/couchdb/data to store its data, and is exposed as a volume
+    e.g., to use current folder add: -v $(pwd):/opt/couchdb/data
+    You can also use Docker volumes like this: -v couchdb_data:/opt/couchdb/data
 """
-import logging
-from flask_sqlalchemy import SQLAlchemy
 
-# Create the SQLAlchemy object to be initialized later in init_db()
-db = SQLAlchemy()
+import os
+import json
+import logging
+from retry import retry
+from cloudant.client import Cloudant
+from cloudant.query import Query
+from requests import HTTPError, ConnectionError
+
+# get configruation from enviuronment (12-factor)
+ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
+CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
+CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
+CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
 class DataValidationError(Exception):
-    """ Used for an data validation errors when deserializing """
+    """ Custom Exception with data validation fails """
     pass
 
-class Inventory(db.Model):
-    """
-    Class that represents Inventory
+class Inventory(object):
+    """ Inventory interface to database """
 
-    This version uses a relational database for persistence which is hidden
-    from us by SQLAlchemy's object relational mappings (ORM)
-    """
     logger = logging.getLogger(__name__)
-    app = None
+    client = None   # cloudant.client.Cloudant
+    database = None # cloudant.database.CloudantDatabase
 
-    # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
-    category = db.Column(db.String(63))
-    available = db.Column(db.Boolean())
-    condition = db.Column(db.String(63))
-    count = db.Column(db.Integer)
+    def __init__(self, name=None, category=None, available=True):
+        """ Constructor """
+        self.id = None
+        self.name = name
+        self.category = category
+        self.available = available
 
-    def __repr__(self):
-        return '<Inventory %r>' % (self.name)
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
+    def create(self):
+        """
+        Creates a new Inventory in the database
+        """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
 
+        try:
+            document = self.database.create_document(self.serialize())
+        except HTTPError as err:
+            Inventory.logger.warning('Create failed: %s', err)
+            return
+
+        if document.exists():
+            self.id = document['_id']
+
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
+    def update(self):
+        """
+        Updates an Inventory in the database
+        """
+        try:
+            document = self.database[self.id]
+        except KeyError:
+            document = None
+        if document:
+            document.update(self.serialize())
+            document.save()
+
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def save(self):
-        """
-        Saves Inventory to the data store
-        """
-        if not self.id:
-            db.session.add(self)
-        db.session.commit()
+        """ Saves an Inventory in the database """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
+        if self.id:
+            self.update()
+        else:
+            self.create()
 
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def delete(self):
-        """ Removes Inventory from the data store """
-        db.session.delete(self)
-        db.session.commit()
+        """ Deletes an Inventory from the database """
+        try:
+            document = self.database[self.id]
+        except KeyError:
+            document = None
+        if document:
+            document.delete()
 
     def serialize(self):
-        """ Serializes Inventory into a dictionary """
-        return {"id": self.id,
-                "name": self.name,
-                "category": self.category,
-                "available": self.available,
-                "condition": self.condition,
-                "count": self.count}
+        """ serializes an Inventory into a dictionary """
+        inventory = {
+            "name": self.name,
+            "category": self.category,
+            "available": self.available
+        }
+        if self.id:
+            inventory['_id'] = self.id
+        return inventory
 
     def deserialize(self, data):
-        """
-        Deserializes Inventory from a dictionary
-
-        Args:
-            data (dict): A dictionary containing the Inventory data
-        """
+        """ deserializes an Inventory my marshalling the data """
+        Inventory.logger.info(data)
         try:
             self.name = data['name']
             self.category = data['category']
             self.available = data['available']
-            self.condition = data['condition']
-            self.count = data['count']
         except KeyError as error:
             raise DataValidationError('Invalid inventory: missing ' + error.args[0])
         except TypeError as error:
-            raise DataValidationError('Invalid inventory: body of request contained' \
-                                      'bad or no data')
+            raise DataValidationError('Invalid inventory: body of request contained bad or no data')
+
+        # if there is no id and the data has one, assign it
+        if not self.id and '_id' in data:
+            self.id = data['_id']
+
         return self
 
-    @classmethod
-    def init_db(cls, app):
-        """ Initializes the database session """
-        cls.logger.info('Initializing database')
-        cls.app = app
-        # This is where we initialize SQLAlchemy from the Flask app
-        db.init_app(app)
-        app.app_context().push()
-        db.create_all()  # make our sqlalchemy tables
+
+######################################################################
+#  S T A T I C   D A T A B S E   M E T H O D S
+######################################################################
 
     @classmethod
+    def connect(cls):
+        """ Connect to the server """
+        cls.client.connect()
+
+    @classmethod
+    def disconnect(cls):
+        """ Disconnect from the server """
+        cls.client.disconnect()
+
+    @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
+    def create_query_index(cls, field_name, order='asc'):
+        """ Creates a new query index for searching """
+        cls.database.create_query_index(index_name=field_name, fields=[{field_name: order}])
+
+    @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
+    def remove_all(cls):
+        """ Removes all documents from the database (use for testing)  """
+        for document in cls.database:
+            document.delete()
+
+    @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def all(cls):
-        """ Returns all of the Inventory in the database """
-        cls.logger.info('Processing all Inventory')
-        return cls.query.all()
+        """ Query that returns all Inventory """
+        results = []
+        for doc in cls.database:
+            inventory = Inventory().deserialize(doc)
+            inventory.id = doc['_id']
+            results.append(inventory)
+        return results
+
+######################################################################
+#  F I N D E R   M E T H O D S
+######################################################################
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
+    def find_by(cls, **kwargs):
+        """ Find records using selector """
+        query = Query(cls.database, selector=kwargs)
+        results = []
+        for doc in query.result:
+            inventory = Inventory()
+            inventory.deserialize(doc)
+            results.append(inventory)
+        return results
+
+    @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find(cls, inventory_id):
-        """ Finds Inventory by it's ID """
-        cls.logger.info('Processing lookup for id %s ...', inventory_id)
-        return cls.query.get(inventory_id)
+        """ Query that finds Inventory by their id """
+        try:
+            document = cls.database[pet_id]
+            return Inventory().deserialize(document)
+        except KeyError:
+            return None
 
     @classmethod
-    def find_or_404(cls, inventory_id):
-        """ Find Inventory by it's id """
-        cls.logger.info('Processing lookup or 404 for id %s ...', inventory_id)
-        return cls.query.get_or_404(inventory_id)
-
-    @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_name(cls, name):
-        """ Returns all Inventory with the given name
-
-        Args:
-            name (string): the name of the Inventory you want to match
-        """
-        cls.logger.info('Processing name query for %s ...', name)
-        return cls.query.filter(cls.name == name)
+        """ Query that finds Inventory by their name """
+        return cls.find_by(name=name)
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_category(cls, category):
-        """ Returns all of the Inventory in a category
-
-        Args:
-            category (string): the category of the Inventory you want to match
-        """
-        cls.logger.info('Processing category query for %s ...', category)
-        return cls.query.filter(cls.category == category)
+        """ Query that finds Inventory by their category """
+        return cls.find_by(category=category)
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_availability(cls, available=True):
         """ Query that finds Inventory by their availability """
-        """ Returns Pets by their availability
+        return cls.find_by(available=available)
 
-        Args:
-            available (boolean): True for inventorys that are available"""
-        cls.logger.info('Processing available query for %s ...', available)
-        return cls.query.filter(cls.available == available)
+############################################################
+#  C L O U D A N T   D A T A B A S E   C O N N E C T I O N
+############################################################
 
-    @classmethod
-    def find_by_condition(cls, condition):
-        """ Returns all of the Inventory in a condition
-
-        Args:
-            condition (string): the condition of the Inventory you want to match
+    @staticmethod
+    def init_db(dbname='inventorys'):
         """
-        cls.logger.info('Processing condition query for %s ...', condition)
-        return cls.query.filter(cls.condition == condition)
-
-
-    @classmethod
-    def find_by_count(cls, count):
-        """ Returns all of the Inventory of a certain count
-
-        Args:
-            count (int): the count of the Inventory you want to match
+        Initialized Coundant database connection
         """
-        cls.logger.info('Processing count query for %s ...', count)
-        return cls.query.filter(cls.count == count)
+        opts = {}
+        vcap_services = {}
+        # Try and get VCAP from the environment or a file if developing
+        if 'VCAP_SERVICES' in os.environ:
+            Inventory.logger.info('Running in Bluemix mode.')
+            vcap_services = json.loads(os.environ['VCAP_SERVICES'])
+        # if VCAP_SERVICES isn't found, maybe we are running on Kubernetes?
+        elif 'BINDING_CLOUDANT' in os.environ:
+            Inventory.logger.info('Found Kubernetes Bindings')
+            creds = json.loads(os.environ['BINDING_CLOUDANT'])
+            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
+        else:
+            Inventory.logger.info('VCAP_SERVICES and BINDING_CLOUDANT undefined.')
+            creds = {
+                "username": CLOUDANT_USERNAME,
+                "password": CLOUDANT_PASSWORD,
+                "host": CLOUDANT_HOST,
+                "port": 5984,
+                "url": "http://"+CLOUDANT_HOST+":5984/"
+            }
+            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
+
+        # Look for Cloudant in VCAP_SERVICES
+        for service in vcap_services:
+            if service.startswith('cloudantNoSQLDB'):
+                cloudant_service = vcap_services[service][0]
+                opts['username'] = cloudant_service['credentials']['username']
+                opts['password'] = cloudant_service['credentials']['password']
+                opts['host'] = cloudant_service['credentials']['host']
+                opts['port'] = cloudant_service['credentials']['port']
+                opts['url'] = cloudant_service['credentials']['url']
+
+        if any(k not in opts for k in ('host', 'username', 'password', 'port', 'url')):
+            Inventory.logger.info('Error - Failed to retrieve options. ' \
+                             'Check that app is bound to a Cloudant service.')
+            exit(-1)
+
+        Inventory.logger.info('Cloudant Endpoint: %s', opts['url'])
+        try:
+            if ADMIN_PARTY:
+                Inventory.logger.info('Running in Admin Party Mode...')
+            Inventory.client = Cloudant(opts['username'],
+                                  opts['password'],
+                                  url=opts['url'],
+                                  connect=True,
+                                  auto_renew=True,
+                                  admin_party=ADMIN_PARTY
+                                 )
+        except ConnectionError:
+            raise AssertionError('Cloudant service could not be reached')
+
+        # Create database if it doesn't exist
+        try:
+            Inventory.database = Inventory.client[dbname]
+        except KeyError:
+            # Create a database using an initialized client
+            Inventory.database = Inventory.client.create_database(dbname)
+        # check for success
+        if not Inventory.database.exists():
+            raise AssertionError('Database [{}] could not be obtained'.format(dbname))
