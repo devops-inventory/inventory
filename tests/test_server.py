@@ -27,11 +27,9 @@ import os
 import logging
 from flask_api import status    # HTTP Status Codes
 #from mock import MagicMock, patch
-from app.models import Inventory, DataValidationError, db
+from app.models import Inventory, DataValidationError
 from .inventory_factory import InventoryFactory
-import app.service as service
-
-DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
+import app.service as app
 
 ######################################################################
 #  T E S T   C A S E S
@@ -42,10 +40,8 @@ class TestInventoryServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """ Run once before all tests """
-        service.app.debug = False
-        service.initialize_logging(logging.INFO)
-        # Set up the test database
-        service.app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
+        app.app.debug = False
+        app.initialize_logging(logging.INFO)
 
     @classmethod
     def tearDownClass(cls):
@@ -53,10 +49,10 @@ class TestInventoryServer(unittest.TestCase):
 
     def setUp(self):
         """ Runs before each test """
-        service.init_db()
-        db.drop_all()    # clean up the last tests
-        db.create_all()  # create new tables
-        self.app = service.app.test_client()
+        """ Initialize the Cloudant database """
+        self.app = app.app.test_client()
+        Inventory.init_db("tests")
+        Inventory.remove_all()
 
     def tearDown(self):
         db.session.remove()

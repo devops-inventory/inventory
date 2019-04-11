@@ -23,3 +23,5 @@ httpie==0.9.9
 # Code coverage
 coverage==4.5.1
 codecov==2.0.15
+
+cloudant==2.10.1

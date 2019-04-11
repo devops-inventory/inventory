@@ -29,17 +29,27 @@ available (boolean) - True for products that are currently in stock
 condition (string) - The quality of the product's state (i.e. new, used, poor)
 count (int) - The quantity in stock
 """
-import logging
-from flask_sqlalchemy import SQLAlchemy
 
-# Create the SQLAlchemy object to be initialized later in init_db()
-db = SQLAlchemy()
+#pip install -r requirements.txt
+import logging
+import os
+import json
+from cloudant.client import Cloudant
+from cloudant.query import Query
+from requests import HTTPError, ConnectionError
+
+# get configruation from enviuronment (12-factor)
+ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
+CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
+CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
+CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
+
 
 class DataValidationError(Exception):
     """ Used for an data validation errors when deserializing """
     pass
 
-class Inventory(db.Model):
+class Inventory(object):
     """
     Class that represents Inventory
 
@@ -47,32 +57,85 @@ class Inventory(db.Model):
     from us by SQLAlchemy's object relational mappings (ORM)
     """
     logger = logging.getLogger(__name__)
-    app = None
+    client = None   # cloudant.client.Cloudant
+    database = None # cloudant.database.CloudantDatabase
 
-    # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
-    category = db.Column(db.String(63))
-    available = db.Column(db.Boolean())
-    condition = db.Column(db.String(63))
-    count = db.Column(db.Integer)
+    def __init__(self, name=None, category=None, available=True, condition=None, count=0):
+        """ Constructor """
+        self.id = None
+        self.name = name
+        self.category = category
+        self.available = available
+        self.condition = condition
+        self.count = count
 
     def __repr__(self):
         return '<Inventory %r>' % (self.name)
 
+    def create(self):
+        """
+        Creates a new inventory in the database
+        """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
+
+        try:
+            document = self.database.create_document(self.serialize())
+        except HTTPError as err:
+            Inventory.logger.warning('Create failed: %s', err)
+            return
+
+        if document.exists():
+            self.id = document['_id']
+
+
+    def create(self):
+        """
+        Creates a new Inventory in the database
+        """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
+
+        try:
+            document = self.database.create_document(self.serialize())
+        except HTTPError as err:
+            Inventory.logger.warning('Create failed: %s', err)
+            return
+
+        if document.exists():
+            self.id = document['_id']
+
+
+    def update(self):
+        """
+        Updates a Inventory in the database
+        """
+        try:
+            document = self.database[self.id]
+        except KeyError:
+            document = None
+        if document:
+            document.update(self.serialize())
+            document.save()
+
     def save(self):
-        """
-        Saves Inventory to the data store
-        """
-        if not self.id:
-            db.session.add(self)
-        db.session.commit()
+        """ Saves a Pet in the database """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
+        if self.id:
+            self.update()
+        else:
+            self.create()
 
     def delete(self):
-        """ Removes Inventory from the data store """
-        db.session.delete(self)
-        db.session.commit()
-
+        """ Deletes Inventory from the database """
+        try:
+            document = self.database[self.id]
+        except KeyError:
+            document = None
+        if document:
+            document.delete()
+            
     def serialize(self):
         """ Serializes Inventory into a dictionary """
         return {"id": self.id,
@@ -102,15 +165,16 @@ class Inventory(db.Model):
                                       'bad or no data')
         return self
 
+
     @classmethod
-    def init_db(cls, app):
-        """ Initializes the database session """
-        cls.logger.info('Initializing database')
-        cls.app = app
-        # This is where we initialize SQLAlchemy from the Flask app
-        db.init_app(app)
-        app.app_context().push()
-        db.create_all()  # make our sqlalchemy tables
+    def connect(cls):
+        """ Connect to the server """
+        cls.client.connect()
+
+    @classmethod
+    def disconnect(cls):
+        """ Disconnect from the server """
+        cls.client.disconnect()
 
     @classmethod
     def all(cls):
@@ -180,3 +244,74 @@ class Inventory(db.Model):
         """
         cls.logger.info('Processing count query for %s ...', count)
         return cls.query.filter(cls.count == count)
+
+############################################################
+#  C L O U D A N T   D A T A B A S E   C O N N E C T I O N
+############################################################
+
+    @staticmethod
+    def init_db(dbname='inventory'):
+        """
+        Initialized Cloundant database connection
+        """
+        opts = {}
+        vcap_services = {}
+        # Try and get VCAP from the environment or a file if developing
+        if 'VCAP_SERVICES' in os.environ:
+            Inventory.logger.info('Running in Bluemix mode.')
+            vcap_services = json.loads(os.environ['VCAP_SERVICES'])
+        # if VCAP_SERVICES isn't found, maybe we are running on Kubernetes?
+        elif 'BINDING_CLOUDANT' in os.environ:
+            Inventory.logger.info('Found Kubernetes Bindings')
+            creds = json.loads(os.environ['BINDING_CLOUDANT'])
+            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
+        else:
+            Inventory.logger.info('VCAP_SERVICES and BINDING_CLOUDANT undefined.')
+            creds = {
+                "username": CLOUDANT_USERNAME,
+                "password": CLOUDANT_PASSWORD,
+                "host": CLOUDANT_HOST,
+                "port": 5984,
+                "url": "http://"+CLOUDANT_HOST+":5984/"
+            }
+            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
+
+        # Look for Cloudant in VCAP_SERVICES
+        for service in vcap_services:
+            if service.startswith('cloudantNoSQLDB'):
+                cloudant_service = vcap_services[service][0]
+                opts['username'] = cloudant_service['credentials']['username']
+                opts['password'] = cloudant_service['credentials']['password']
+                opts['host'] = cloudant_service['credentials']['host']
+                opts['port'] = cloudant_service['credentials']['port']
+                opts['url'] = cloudant_service['credentials']['url']
+
+        if any(k not in opts for k in ('host', 'username', 'password', 'port', 'url')):
+            Inventory.logger.info('Error - Failed to retrieve options. ' \
+                             'Check that app is bound to a Cloudant service.')
+            exit(-1)
+
+        Inventory.logger.info('Cloudant Endpoint: %s', opts['url'])
+        try:
+            if ADMIN_PARTY:
+                Inventory.logger.info('Running in Admin Party Mode...')
+            Inventory.client = Cloudant(opts['username'],
+                                  opts['password'],
+                                  url=opts['url'],
+                                  connect=True,
+                                  auto_renew=True,
+                                  admin_party=ADMIN_PARTY
+                                 )
+        except ConnectionError:
+            raise AssertionError('Cloudant service could not be reached')
+
+        # Create database if it doesn't exist
+        try:
+            Inventory.database = Inventory.client[dbname]
+        except KeyError:
+            # Create a database using an initialized client
+            Inventory.database = Inventory.client.create_database(dbname)
+        # check for success
+        if not Inventory.database.exists():
+            raise AssertionError('Database [{}] could not be obtained'.format(dbname))
+

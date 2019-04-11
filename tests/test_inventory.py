@@ -24,10 +24,21 @@ import unittest
 import mock
 import os
 import logging
-from app.models import Inventory, DataValidationError, db
+from app.models import Inventory, DataValidationError
 from app import app
 
-DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///../db/test.db')
+VCAP_SERVICES = {
+    'cloudantNoSQLDB': [
+        {'credentials': {
+            'username': 'admin',
+            'password': 'pass',
+            'host': 'localhost',
+            'port': 5984,
+            'url': 'http://admin:pass@localhost:5984'
+            }
+        }
+    ]
+}
 
 
 ######################################################################
@@ -39,18 +50,14 @@ class TestInventory(unittest.TestCase):
     def setUpClass(cls):
         """ These run once per Test suite """
         app.debug = False
-        # Set up the test database
-        app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
         
     @classmethod
     def tearDownClass(cls):
         pass
 
     def setUp(self):
-        Inventory.init_db(app)
-        db.drop_all()    # clean up the last tests
-        db.create_all()  # make our sqlalchemy tables
-        self.app = app.test_client()
+        Inventory.init_db("test")
+        Inventory.remove_all()
 
     def tearDown(self):
         db.session.remove()
@@ -218,6 +225,11 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inventory[0].available, True)
         self.assertEqual(inventory[0].condition, "new")
 
+
+    def test_connection_error(self, bad_mock):
+        """ Test Connection error handler """
+        bad_mock.side_effect = ConnectionError()
+        self.assertRaises(AssertionError, Inventory.init_db, 'test')
 
 ######################################################################
 #   M A I N

@@ -34,7 +34,8 @@ from werkzeug.exceptions import NotFound
 
 # For this example we'll use SQLAlchemy, a popular ORM that supports a
 # variety of backends including SQLite, MySQL, and PostgreSQL
-from flask_sqlalchemy import SQLAlchemy
+from cloudant.client import Cloudant
+from cloudant.query import Query
 from app.models import Inventory, DataValidationError
 
 # Import Flask application
@@ -230,7 +231,7 @@ def delete_inventory(inventory_id):
 ######################################################################
 
 def init_db():
-    """ Initialies the SQLAlchemy app """
+    """ Initialies the Cloudant app """
     global app
     Inventory.init_db(app)
 
