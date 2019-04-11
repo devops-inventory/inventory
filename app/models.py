@@ -41,7 +41,6 @@ available (boolean) - True for products that are currently in stock
 condition (string) - The quality of the product's state (i.e. new, used, poor)
 count (int) - The quantity in stock
 """
-<<<<<<< HEAD
 
 #pip install -r requirements.txt
 import logging
@@ -68,6 +67,7 @@ class Inventory(object):
     logger = logging.getLogger(__name__)
     client = None   # cloudant.client.Cloudant
     database = None # cloudant.database.CloudantDatabase
+
 
     def __init__(self, name=None, category=None, available=True, condition=None, count=0):
         """ Constructor """
