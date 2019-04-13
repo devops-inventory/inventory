@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Pet API Service Test Suite
+Inventory API Service Test Suite
 
 Test cases can be run with the following:
   nosetests -v --with-spec --spec-color
@@ -24,6 +24,7 @@ Test cases can be run with the following:
 import mock
 import unittest
 import os
+import json
 import logging
 from flask_api import status    # HTTP Status Codes
 #from mock import MagicMock, patch
@@ -37,27 +38,15 @@ import app.service as app
 class TestInventoryServer(unittest.TestCase):
     """ Inventory Server Tests """
 
-    @classmethod
-    def setUpClass(cls):
-        """ Run once before all tests """
-        app.app.debug = False
-        app.initialize_logging(logging.INFO)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
     def setUp(self):
         """ Runs before each test """
         """ Initialize the Cloudant database """
         self.app = app.app.test_client()
         Inventory.init_db("tests")
         Inventory.remove_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
+        Inventory("tools", "widget1", True, "new").save()
+        Inventory("materials", "widget2", False, "old").save()
+        
     def _create_inventorys(self, count):
         """ Factory method to create inventorys in bulk """
         inventorys = []
@@ -87,97 +76,88 @@ class TestInventoryServer(unittest.TestCase):
         
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
-        self._create_inventorys(5)
         resp = self.app.get('/inventory')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertEqual(len(data), 5)
+        self.assertTrue(len(resp.data) > 0)
 
     def test_get_inventory(self):
         """ Get a single Inventory """
-        # get the id of a inventory
-        test_inventory = self._create_inventorys(1)[0]
-        resp = self.app.get('/inventory/{}'.format(test_inventory.id),
-                            content_type='application/json')
+        inventory = self.get_inventory('tools')[0] # returns a list
+        resp = self.app.get('/inventory/{}'.format(inventory['id']))
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertEqual(data['name'], test_inventory.name)
+        data = json.loads(resp.data)
+        self.assertEqual(data['name'], 'tools')
 
     def test_get_inventory_not_found(self):
         """ Get a Inventory thats not found """
         resp = self.app.get('/inventory/0')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        data = json.loads(resp.data)
+        self.assertIn('was not found', data['message'])
 
     def test_create_inventory(self):
-        """ Create a new Inventory """
-        test_inventory = InventoryFactory()
-        resp = self.app.post('/inventory',
-                             json=test_inventory.serialize(),
-                             content_type='application/json')
+        """ Create a new inventory """
+        # save the current number of inventory for later comparrison
+        inventory_count = self.get_inventory_count()
+        # add a new inventory
+        new_inventory = {'name': 'tools', 'category': 'widget1', 'available': True, 'condition': 'new','count':1}
+        data = json.dumps(new_inventory)
+        resp = self.app.post('/inventory', data=data, content_type='application/json')
+        # if resp.status_code == 429: # rate limit exceeded
+        #     sleep(1)                # wait for 1 second and try again
+        #     resp = self.app.post('/inventory', data=data, content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         # Make sure location header is set
         location = resp.headers.get('Location', None)
-        self.assertTrue(location != None)
+        self.assertNotEqual(location, None)
         # Check the data is correct
-        new_inventory = resp.get_json()
-        self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
-        self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
-        self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
-        self.assertEqual(new_inventory['condition'], test_inventory.condition, "Condition does not match")
-        # Check that the location header was correct
-        resp = self.app.get(location,
-                            content_type='application/json')
+        new_json = json.loads(resp.data)
+        self.assertEqual(new_json['name'], 'tools')
+        # check that count has gone up and includes tool
+        resp = self.app.get('/inventory')
+        data = json.loads(resp.data)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        new_inventory = resp.get_json()
-        self.assertEqual(new_inventory['name'], test_inventory.name, "Names do not match")
-        self.assertEqual(new_inventory['category'], test_inventory.category, "Categories do not match")
-        self.assertEqual(new_inventory['available'], test_inventory.available, "Availability does not match")
-        self.assertEqual(new_inventory['condition'], test_inventory.condition, "Condition does not match")
+        self.assertEqual(len(data), inventory_count + 1)
+        self.assertIn(new_json, data)
+
 
     def test_update_inventory(self):
         """ Update an existing Inventory """
-        # create a inventory to update
-        test_inventory = InventoryFactory()
-        resp = self.app.post('/inventory',
-                             json=test_inventory.serialize(),
-                             content_type='application/json')
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
-        # update the inventory
-        new_inventory = resp.get_json()
-        new_inventory['category'] = 'unknown'
-        resp = self.app.put('/inventory/{}'.format(new_inventory['id']),
-                            json=new_inventory,
+        inventory = self.get_inventory('tools')[0] # returns a list
+        self.assertEqual(inventory['category'], 'widget1')
+        inventory['category'] = 'widget3'
+        # make the call
+        data = json.dumps(inventory)
+        resp = self.app.put('/inventory/{}'.format(inventory['id']), data=data,
                             content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        updated_inventory = resp.get_json()
-        self.assertEqual(updated_inventory['category'], 'unknown')
+        # go back and get it again
+        resp = self.app.get('/inventory/{}'.format(inventory['id']), content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_json = json.loads(resp.data)
+        self.assertEqual(new_json['category'], 'widget3')
 
     def test_delete_inventory(self):
         """ Delete a Inventory """
-        test_inventory = self._create_inventorys(1)[0]
-        resp = self.app.delete('/inventory/{}'.format(test_inventory.id),
+        inventory = self.get_inventory('tools')[0] # returns a list
+        inventory_count = self.get_inventory_count()
+        resp = self.app.delete('/inventory/{}'.format(inventory['id']),
                                content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
-        # make sure they are deleted
-        resp = self.app.get('/inventory/{}'.format(test_inventory.id),
-                            content_type='application/json')
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        new_count = self.get_inventory_count()
+        self.assertEqual(new_count, inventory_count - 1)
 
     def test_query_inventory_list_by_category(self):
         """ Query Inventorys by Category """
-        inventorys = self._create_inventorys(10)
-        test_category = inventorys[0].category
-        category_inventorys = [inventory for inventory in inventorys if inventory.category == test_category]
-        resp = self.app.get('/inventory',
-                            query_string='category={}'.format(test_category))
+        resp = self.app.get('/inventory', query_string='category=widget1')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertEqual(len(data), len(category_inventorys))
-        # check the data just to be sure
-        for inventory in data:
-            self.assertEqual(inventory['category'], test_category)
+        self.assertTrue(len(resp.data) > 0)
+        self.assertIn('tools', resp.data)
+        self.assertNotIn('materials', resp.data)
+        data = json.loads(resp.data)
+        query_item = data[0]
+        self.assertEqual(query_item['category'], 'widget1')
 
     @mock.patch('app.service.Inventory.find_by_name')
     def test_bad_request(self, bad_request_mock):
@@ -207,6 +187,29 @@ class TestInventoryServer(unittest.TestCase):
         resp = self.app.get('/inventory', query_string='name=widget1')
         self.assertEqual(resp.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+######################################################################
+# Utility functions
+######################################################################
+
+    def get_inventory(self, name):
+        """ retrieves a inventory for use in other actions """
+        resp = self.app.get('/inventory',
+                            query_string='name={}'.format(name))
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(resp.data), 0)
+        self.assertIn(name, resp.data)
+        data = json.loads(resp.data)
+        return data
+
+    def get_inventory_count(self):
+        """ save the current number of inventory """
+        resp = self.app.get('/inventory')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = json.loads(resp.data)
+        return len(data)
+
+    
 ######################################################################
 #   M A I N
 ######################################################################
