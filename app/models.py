@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Pet Model that uses Cloudant
+Inventory Model that uses Cloudant
 You must initlaize this class before use by calling inititlize().
 This class looks for an environment variable called VCAP_SERVICES
 to get it's database credentials from. If it cannot find one, it
@@ -78,16 +78,10 @@ class Inventory(object):
         self.condition = condition
         self.count = count
 
-    def __repr__(self):
-        return '<Inventory %r>' % (self.name)
-
     def create(self):
-        """
-        Creates a new inventory in the database
-        """
+        """Creates a new inventory in the database"""
         if self.name is None:   # name is the only required field
             raise DataValidationError('name attribute is not set')
-
         try:
             document = self.database.create_document(self.serialize())
         except HTTPError as err:
@@ -96,24 +90,6 @@ class Inventory(object):
 
         if document.exists():
             self.id = document['_id']
-
-
-    def create(self):
-        """
-        Creates a new Inventory in the database
-        """
-        if self.name is None:   # name is the only required field
-            raise DataValidationError('name attribute is not set')
-
-        try:
-            document = self.database.create_document(self.serialize())
-        except HTTPError as err:
-            Inventory.logger.warning('Create failed: %s', err)
-            return
-
-        if document.exists():
-            self.id = document['_id']
-
 
     def update(self):
         """
@@ -128,7 +104,7 @@ class Inventory(object):
             document.save()
 
     def save(self):
-        """ Saves a Pet in the database """
+        """ Saves a Inventory in the database """
         if self.name is None:   # name is the only required field
             raise DataValidationError('name attribute is not set')
         if self.id:
@@ -172,6 +148,9 @@ class Inventory(object):
         except TypeError as error:
             raise DataValidationError('Invalid inventory: body of request contained' \
                                       'bad or no data')
+        if not self.id and '_id' in data:
+            self.id = data['_id']
+            
         return self
 
 
@@ -186,73 +165,71 @@ class Inventory(object):
         cls.client.disconnect()
 
     @classmethod
+    def create_query_index(cls, field_name, order='asc'):
+        """ Creates a new query index for searching """
+        cls.database.create_query_index(index_name=field_name, fields=[{field_name: order}])
+
+    @classmethod
     def all(cls):
         """ Returns all of the Inventory in the database """
-        cls.logger.info('Processing all Inventory')
         return cls.query.all()
 
     @classmethod
-    def find(cls, inventory_id):
-        """ Finds Inventory by it's ID """
-        cls.logger.info('Processing lookup for id %s ...', inventory_id)
-        return cls.query.get(inventory_id)
+    def remove_all(cls):
+        """ Removes all documents from the database (use for testing)  """
+        for document in cls.database:
+            document.delete()
 
     @classmethod
-    def find_or_404(cls, inventory_id):
-        """ Find Inventory by it's id """
-        cls.logger.info('Processing lookup or 404 for id %s ...', inventory_id)
-        return cls.query.get_or_404(inventory_id)
+    def all(cls):
+        """ Query that returns all inventory """
+        results = []
+        for doc in cls.database:
+            inventory = Inventory().deserialize(doc)
+            inventory.id = doc['_id']
+            results.append(inventory)
+        return results
+
+    @classmethod
+    def find_by(cls, **kwargs):
+        """ Find records using selector """
+        query = Query(cls.database, selector=kwargs)
+        results = []
+        for doc in query.result:
+            inventory = Inventory()
+            inventory.deserialize(doc)
+            results.append(inventory)
+        return results
+
+    @classmethod
+    def find(cls, inventory_id):
+        """ Query that finds Inventory by their id """
+        try:
+            document = cls.database[inventory_id]
+            return Inventory().deserialize(document)
+        except KeyError:
+            return None
 
     @classmethod
     def find_by_name(cls, name):
-        """ Returns all Inventory with the given name
-
-        Args:
-            name (string): the name of the Inventory you want to match
-        """
-        cls.logger.info('Processing name query for %s ...', name)
-        return cls.query.filter(cls.name == name)
+        """ Query that finds Inventory by their name """
+        return cls.find_by(name=name)
 
     @classmethod
     def find_by_category(cls, category):
-        """ Returns all of the Inventory in a category
-
-        Args:
-            category (string): the category of the Inventory you want to match
-        """
-        cls.logger.info('Processing category query for %s ...', category)
-        return cls.query.filter(cls.category == category)
+        """ Query that finds Inventory by their category """
+        return cls.find_by(category=category)
 
     @classmethod
     def find_by_availability(cls, available=True):
         """ Query that finds Inventory by their availability """
-        """ Returns Pets by their availability
-
-        Args:
-            available (boolean): True for inventorys that are available"""
-        cls.logger.info('Processing available query for %s ...', available)
-        return cls.query.filter(cls.available == available)
+        return cls.find_by(available=available)
 
     @classmethod
     def find_by_condition(cls, condition):
-        """ Returns all of the Inventory in a condition
+        """ Query that finds Inventory by their condition """
+        return cls.find_by(condition=condition)
 
-        Args:
-            condition (string): the condition of the Inventory you want to match
-        """
-        cls.logger.info('Processing condition query for %s ...', condition)
-        return cls.query.filter(cls.condition == condition)
-
-
-    @classmethod
-    def find_by_count(cls, count):
-        """ Returns all of the Inventory of a certain count
-
-        Args:
-            count (int): the count of the Inventory you want to match
-        """
-        cls.logger.info('Processing count query for %s ...', count)
-        return cls.query.filter(cls.count == count)
 
 ############################################################
 #  C L O U D A N T   D A T A B A S E   C O N N E C T I O N
@@ -271,7 +248,6 @@ class Inventory(object):
             vcap_services = json.loads(os.environ['VCAP_SERVICES'])
         # if VCAP_SERVICES isn't found, maybe we are running on Kubernetes?
         elif 'BINDING_CLOUDANT' in os.environ:
-            Inventory.logger.info('Found Kubernetes Bindings')
             creds = json.loads(os.environ['BINDING_CLOUDANT'])
             vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
         else:
@@ -295,12 +271,6 @@ class Inventory(object):
                 opts['port'] = cloudant_service['credentials']['port']
                 opts['url'] = cloudant_service['credentials']['url']
 
-        if any(k not in opts for k in ('host', 'username', 'password', 'port', 'url')):
-            Inventory.logger.info('Error - Failed to retrieve options. ' \
-                             'Check that app is bound to a Cloudant service.')
-            exit(-1)
-
-        Inventory.logger.info('Cloudant Endpoint: %s', opts['url'])
         try:
             if ADMIN_PARTY:
                 Inventory.logger.info('Running in Admin Party Mode...')
@@ -323,4 +293,3 @@ class Inventory(object):
         # check for success
         if not Inventory.database.exists():
             raise AssertionError('Database [{}] could not be obtained'.format(dbname))
-
