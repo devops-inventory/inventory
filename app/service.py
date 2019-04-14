@@ -34,7 +34,8 @@ from werkzeug.exceptions import NotFound
 
 # For this example we'll use SQLAlchemy, a popular ORM that supports a
 # variety of backends including SQLite, MySQL, and PostgreSQL
-from flask_sqlalchemy import SQLAlchemy
+from cloudant.client import Cloudant
+from cloudant.query import Query
 from app.models import Inventory, DataValidationError
 
 # Import Flask application
@@ -113,10 +114,7 @@ def index():
 def restart():
 	try:
 		some_queue.put("something")
-		print "Restarted successfully"
-		return "Quit"
 	except: 
-		print "Failed in restart"
 		return "Failed"
 
 ######################################################################
@@ -136,12 +134,6 @@ def list_inventory():
         inventory = Inventory.find_by_category(category)
     elif name:
         inventory = Inventory.find_by_name(name)
-    elif condition:
-        inventory = Inventory.find_by_condition(condition)
-    elif count:
-        inventory = Inventory.find_by_count(count)
-    elif available:
-        inventory = Inventory.find_by_availability(available)
     else:
         inventory = Inventory.all()
 
@@ -152,7 +144,7 @@ def list_inventory():
 ######################################################################
 # RETRIEVE INVENTORY
 ######################################################################
-@app.route('/inventory/<int:inventory_id>', methods=['GET'])
+@app.route('/inventory/<string:inventory_id>', methods=['GET'])
 def get_inventory(inventory_id):
     """
     Retrieve a single Inventory
@@ -191,7 +183,7 @@ def create_inventory():
 ######################################################################
 # UPDATE AN EXISTING INVENTORY
 ######################################################################
-@app.route('/inventory/<int:inventory_id>', methods=['PUT'])
+@app.route('/inventory/<string:inventory_id>', methods=['PUT'])
 def update_inventory(inventory_id):
     """
     Update a Inventory
@@ -201,8 +193,6 @@ def update_inventory(inventory_id):
     app.logger.info('Request to update Inventory with id: %s', inventory_id)
     check_content_type('application/json')
     inventory = Inventory.find(inventory_id)
-    if not inventory:
-        raise NotFound("Inventory with id '{}' was not found.".format(inventory_id))
     inventory.deserialize(request.get_json())
     inventory.id = inventory_id
     inventory.save()
@@ -212,7 +202,7 @@ def update_inventory(inventory_id):
 ######################################################################
 # DELETE INVENTORY
 ######################################################################
-@app.route('/inventory/<int:inventory_id>', methods=['DELETE'])
+@app.route('/inventory/<string:inventory_id>', methods=['DELETE'])
 def delete_inventory(inventory_id):
     """
     Delete an Inventory
@@ -230,7 +220,7 @@ def delete_inventory(inventory_id):
 ######################################################################
 
 def init_db():
-    """ Initialies the SQLAlchemy app """
+    """ Initialies the Cloudant app """
     global app
     Inventory.init_db(app)
 
@@ -241,22 +231,3 @@ def check_content_type(content_type):
     app.logger.error('Invalid Content-Type: %s', request.headers['Content-Type'])
     abort(415, 'Content-Type must be {}'.format(content_type))
 
-def initialize_logging(log_level=logging.INFO):
-    """ Initialized the default logging to STDOUT """
-    if not app.debug:
-        print 'Setting up logging...'
-        # Set up default logging for submodules to use STDOUT
-        # datefmt='%m/%d/%Y %I:%M:%S %p'
-        fmt = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-        logging.basicConfig(stream=sys.stdout, level=log_level, format=fmt)
-        # Make a new log handler that uses STDOUT
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter(fmt))
-        handler.setLevel(log_level)
-        # Remove the Flask default handlers and use our own
-        handler_list = list(app.logger.handlers)
-        for log_handler in handler_list:
-            app.logger.removeHandler(log_handler)
-        app.logger.addHandler(handler)
-        app.logger.setLevel(log_level)
-        app.logger.info('Logging handler established')

@@ -6,12 +6,10 @@ This module also sets up the logging to be used with gunicorn
 """
 import logging
 from flask import Flask
+from .models import Inventory, DataValidationError
 
 # Create Flask application
 app = Flask(__name__)
-# We'll just use SQLite here so we don't need an external database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../db/development.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'please, tell nobody... Shhhh'
 app.config['LOGGING_LEVEL'] = logging.INFO
 
@@ -24,8 +22,10 @@ if __name__ != '__main__':
     if gunicorn_logger:
         app.logger.handlers = gunicorn_logger.handlers
         app.logger.setLevel(gunicorn_logger.level)
-    else:
-        service.initialize_logging()
-    service.init_db()  # make our sqlalchemy tables
 
 app.logger.info('Logging established')
+
+@app.before_first_request
+def init_db(dbname="inventory"):
+    """ Initlaize the model """
+    Inventory.init_db(dbname)
