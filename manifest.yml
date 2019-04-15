@@ -2,8 +2,8 @@
 # This manifest deploys a Python Flask application with a Redis database
 applications:
 - name: nyu-inventory-service-s19
-  memory: 64M
-  instances: 2
+  memory: 512M
+  instances: 1
   timeout: 180
   #random-route: true
   host: nyu-inventory-service-s19
@@ -11,7 +11,7 @@ applications:
   path: .
   disk_quota: 1024M
   buildpack: python_buildpack
-  command: gunicorn --bind=0.0.0.0:$PORT service:app
+  command: null
   services:
   - Cloudant
   env:
