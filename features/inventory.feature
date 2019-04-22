@@ -10,10 +10,10 @@ Background:
         |  2 | pot        | kitchen       | True      |
         |  3 | soap       | bath          | True      |
 
-#Issue #78 - Read Scenario @Sam
+#Issue #78 - DONE BY SAM
 Scenario: The server is running
     When I visit the "Home Page"
-    Then I should see "Pet Demo RESTful Service" in the title
+    Then I should see "Inventory Demo RESTful Service" in the title
     And I should not see "404 Not Found"
 
 #Issue 77 - DONE BY JEFF
@@ -32,17 +32,17 @@ Scenario: List all Inventory
     And I should see "pot" in the results
     And I should see "soap" in the results
 
-#Issue 82 - Query @Sam
+#Issue 82 - DONE BY SAM
 Scenario: List all clothing
     When I visit the "Home Page"
-    And I set the "Category" to "xxx"
+    And I set the "Category" to "clothing"
     And I press the "Search" button
-    Then I should see "xxx" in the results
-    And I should not see "xxx" in the results
-    And I should not see "xxx" in the results
+    Then I should see "shirt" in the results
+    And I should not see "pot" in the results
+    And I should not see "soap" in the results
 
 #Issue 79 - DONE BY JEFF
-Scenario: Update a Pet
+Scenario: Update a Inventory
     When I visit the "Home Page"
     And I set the "Id" to "1"
     And I press the "Retrieve" button
