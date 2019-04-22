@@ -16,8 +16,8 @@ PORT = os.getenv('PORT', '5000')
 ######################################################################
 if __name__ == "__main__":
     print "****************************************"
-    print " P E T   S E R V I C E   R U N N I N G"
+    print " I N V E N T O R Y   S E R V I C E   R U N N I N G"
     print "****************************************"
     #service.initialize_logging()
-    service.init_db()  # make our sqlalchemy tables
+    #service.init_db()  # make our sqlalchemy tables
     app.run(host='0.0.0.0', port=int(PORT), debug=DEBUG)
