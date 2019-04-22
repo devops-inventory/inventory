@@ -1,4 +1,4 @@
-# Copyright 2016, 2017 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2017 John J. Rofrano. All Rights Reserved. JD.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ def index():
 def restart():
 	try:
 		some_queue.put("something")
-	except: 
+	except:
 		return "Failed"
 
 ######################################################################
@@ -230,4 +230,3 @@ def check_content_type(content_type):
         return
     app.logger.error('Invalid Content-Type: %s', request.headers['Content-Type'])
     abort(415, 'Content-Type must be {}'.format(content_type))
-
