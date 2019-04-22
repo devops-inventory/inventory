@@ -42,7 +42,7 @@ Scenario: List all clothing
     And I should not see "xxx" in the results
 
 #Issue 79 - DONE BY JEFF
-Scenario: Update a Pet
+Scenario: Update a Inventory
     When I visit the "Home Page"
     And I set the "Id" to "1"
     And I press the "Retrieve" button
