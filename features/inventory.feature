@@ -19,8 +19,8 @@ Scenario: The server is running
 #Issue 77 - DONE BY JEFF
 Scenario: Create a Inventory
     When I visit the "Home Page"
-    And I set the "Name" to "Happy"
-    And I set the "Category" to "Hippo"
+    And I set the "Name" to "chair"
+    And I set the "Category" to "furniture"
     And I press the "Create" button
     Then I should see the message "Success"
 
