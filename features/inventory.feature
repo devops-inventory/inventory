@@ -59,5 +59,10 @@ Scenario: Update a Inventory
     Then I should not see "shirt" in the results
 
   #Issue 84 - Action @Nicole
-
+    
   #Issue 80 - Delete @Nicole
+  Scenario: Delete an Inventory
+    When I visit the "Home Page"
+    And I set the "Id" to "1"
+    And I press the "Delete" button
+    Then I should not see "1" in the "Id" field
