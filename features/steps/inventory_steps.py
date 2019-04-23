@@ -14,18 +14,21 @@ from selenium.webdriver.support import expected_conditions
 
 WAIT_SECONDS = int(getenv('WAIT_SECONDS', '30'))
 
+
 @given('the following inventory')
 def step_impl(context):
     """ Delete all Inventory and load new ones """
     headers = {'Content-Type': 'application/json'}
-    context.resp = requests.delete(context.base_url + '/inventory/reset', headers=headers)
-    expect(context.resp.status_code).to_equal(204)
+    #context.resp = requests.delete(context.base_url + '/inventory/reset', headers=headers)
+    #expect(context.resp.status_code).to_equal(204)
     create_url = context.base_url + '/inventory'
     for row in context.table:
         data = {
             "name": row['name'],
             "category": row['category'],
-            "available": row['available'] in ['True', 'true', '1']
+            "available": row['available'],
+            "condition": row['condition'],
+            "count": row['count']
             }
         payload = json.dumps(data)
         context.resp = requests.post(create_url, data=payload, headers=headers)

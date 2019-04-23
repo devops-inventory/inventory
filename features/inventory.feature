@@ -5,15 +5,15 @@ Feature: The inventory store service back-end
 
 Background:
     Given the following inventory
-        | id | name       | category      | available |
-        |  1 | shirt      | clothing      | True      |
-        |  2 | pot        | kitchen       | True      |
-        |  3 | soap       | bath          | True      |
+        | id | name       | category      | available | condition | count |
+        |  1 | shirt      | clothing      | True      | new       | 1     |
+        |  2 | pot        | kitchen       | True      | returned  | 3     |
+        |  3 | soap       | bath          | True      | new       | 5	  |
 
 #Issue #78 - DONE BY SAM
 Scenario: The server is running
     When I visit the "Home Page"
-    Then I should see "Inventory Demo RESTful Service" in the title
+    Then I should see "" in the title
     And I should not see "404 Not Found"
 
 #Issue 77 - DONE BY JEFF
