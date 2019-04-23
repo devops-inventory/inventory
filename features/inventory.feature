@@ -13,7 +13,7 @@ Background:
 #Issue #78 - DONE BY SAM
 Scenario: The server is running
     When I visit the "Home Page"
-    Then I should see "" in the title
+    Then I should see "Inventory Demo REST API Service" in the title
     And I should not see "404 Not Found"
 
 #Issue 77 - DONE BY JEFF

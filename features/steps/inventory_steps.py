@@ -19,8 +19,8 @@ WAIT_SECONDS = int(getenv('WAIT_SECONDS', '30'))
 def step_impl(context):
     """ Delete all Inventory and load new ones """
     headers = {'Content-Type': 'application/json'}
-    #context.resp = requests.delete(context.base_url + '/inventory/reset', headers=headers)
-    #expect(context.resp.status_code).to_equal(204)
+    context.resp = requests.delete(context.base_url + '/inventory/reset', headers=headers)
+    expect(context.resp.status_code).to_equal(204)
     create_url = context.base_url + '/inventory'
     for row in context.table:
         data = {
