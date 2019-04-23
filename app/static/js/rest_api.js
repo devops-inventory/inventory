@@ -14,6 +14,8 @@ $(function () {
         } else {
             $("#inventory_available").val("false");
         }
+        $("#inventory_condition").val(res.condition);
+        $("#inventory_count").val(res.count);
     }
 
     /// Clears all form fields
@@ -21,6 +23,9 @@ $(function () {
         $("#inventory_name").val("");
         $("#inventory_category").val("");
         $("#inventory_available").val("");
+        $("#inventory_condition").val("");
+        $("#inventory_count").val("");
+        
     }
 
     // Updates the flash message area
@@ -38,11 +43,16 @@ $(function () {
         var name = $("#inventory_name").val();
         var category = $("#inventory_category").val();
         var available = $("#inventory_available").val() == "true";
+        var condition = $("#inventory_condition").val();
+        var count = $("#inventory_count").val();
+        
 
         var data = {
             "name": name,
             "category": category,
-            "available": available
+            "available": available,
+            "condition": condition,
+            "count": count
         };
 
         var ajax = $.ajax({
@@ -73,11 +83,16 @@ $(function () {
         var name = $("#inventory_name").val();
         var category = $("#inventory_category").val();
         var available = $("#inventory_available").val() == "true";
+        var condition = $("#inventory_condition").val();
+        var count = $("#inventory_count").val();
 
         var data = {
             "name": name,
             "category": category,
-            "available": available
+            "available": available.
+            "condition": condition,
+            "count": count
+            
         };
 
         var ajax = $.ajax({
@@ -206,10 +221,12 @@ $(function () {
             header += '<th style="width:40%">Name</th>'
             header += '<th style="width:40%">Category</th>'
             header += '<th style="width:10%">Available</th></tr>'
+            header += '<th style="width:10%">Condition</th></tr>'
+            header += '<th style="width:10%">Count</th></tr>'
             $("#search_results").append(header);
             for(var i = 0; i < res.length; i++) {
                 var inventory = res[i];
-                var row = "<tr><td>"+inventory.id+"</td><td>"+inventory.name+"</td><td>"+inventory.category+"</td><td>"+inventory.available+"</td></tr>";
+                var row = "<tr><td>"+inventory.id+"</td><td>"+inventory.name+"</td><td>"+inventory.category+"</td><td>"+inventory.available+"</td><td>"+inventory.condition+"</td><td>"+inventory.count+"</td></tr>";
                 $("#search_results").append(row);
             }
 
