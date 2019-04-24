@@ -100,7 +100,7 @@ def step_impl(context, text_string, element_name):
     element_id = 'inventory_' + element_name.lower()
     element = context.driver.find_element_by_id(element_id)
     expect(element.get_attribute('value')).to_equal(text_string)
-    
+
 @then('I should see the message "{message}"')
 def step_impl(context, message):
     element = context.driver.find_element_by_id('flash_message')
