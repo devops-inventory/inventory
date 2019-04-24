@@ -21,6 +21,9 @@ Scenario: Create a Inventory
     When I visit the "Home Page"
     And I set the "Name" to "chair"
     And I set the "Category" to "furniture"
+    And I set the "Condition" to "new"
+    And I choose "Available" as "True"
+    And I set the "Count" to "1"
     And I press the "Create" button
     Then I should see the message "Success"
 
@@ -66,3 +69,4 @@ Scenario: Update a Inventory
     And I set the "Id" to "1"
     And I press the "Delete" button
     Then I should not see "1" in the "Id" field
+    And I should not see "shirt" in the "Name" field

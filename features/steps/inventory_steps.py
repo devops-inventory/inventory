@@ -57,6 +57,13 @@ def step_impl(context, element_name, text_string):
     element.clear()
     element.send_keys(text_string)
 
+@when('I choose "{element_name}" as "{true_false}"')
+def step_impl(context, element_name, true_false):
+    element_id = 'inventory_' + element_name.lower()
+    element = context.driver.find_element_by_id(element_id)
+    element.clear()
+    element.send_keys(true_false)
+
 ##################################################################
 # This code works because of the following naming convention:
 # The buttons have an id in the html hat is the button text
@@ -73,15 +80,13 @@ def step_impl(context, button):
 @then('I should see "{name}" in the results')
 def step_impl(context, name):
     element = context.driver.find_element_by_id('search_results')
-    raise Exception(element.text)
+    #raise Exception(element.text)
     expect(element.text).to_contain(name)
-    # found = WebDriverWait(context.driver, WAIT_SECONDS).until(
-    #     expected_conditions.text_to_be_present_in_element(
-    #         (By.ID, 'search_results'),
-    #         name
-    #     )
-    # )
-    # expect(found).to_be(True)
+    found = WebDriverWait(context.driver, WAIT_SECONDS).until(
+        expected_conditions.text_to_be_present_in_element(
+            (By.ID, 'search_results'),
+            name))
+    expect(found).to_be(True)
 
 @then('I should not see "{name}" in the results')
 def step_impl(context, name):
@@ -89,6 +94,13 @@ def step_impl(context, name):
     error_msg = "I should not see '%s' in '%s'" % (name, element.text)
     ensure(name in element.text, False, error_msg)
 
+
+@then('I should not see "{text_string}" in the "{element_name}" field')
+def step_impl(context, text_string, element_name):
+    element_id = 'inventory_' + element_name.lower()
+    element = context.driver.find_element_by_id(element_id)
+    expect(element.get_attribute('value')).to_equal(text_string)
+    
 @then('I should see the message "{message}"')
 def step_impl(context, message):
     element = context.driver.find_element_by_id('flash_message')

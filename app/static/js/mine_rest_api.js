@@ -9,11 +9,7 @@ $(function () {
         $("#inventory_id").val(res.id);
         $("#inventory_name").val(res.name);
         $("#inventory_category").val(res.category);
-        if (res.available == true) {
-            $("#inventory_available").val("true");
-        } else {
-            $("#inventory_available").val("false");
-        }
+        $("#inventory_available").val(res.available);
         $("#inventory_condition").val(res.condition);
         $("#inventory_count").val(res.count);
     }
@@ -25,7 +21,6 @@ $(function () {
         $("#inventory_available").val("");
         $("#inventory_condition").val("");
         $("#inventory_count").val("");
-        
     }
 
     // Updates the flash message area
@@ -35,24 +30,23 @@ $(function () {
     }
 
     // ****************************************
-    // Create Inventory
+    // Create a inventory
     // ****************************************
 
     $("#create-btn").click(function () {
 
         var name = $("#inventory_name").val();
         var category = $("#inventory_category").val();
-        var available = $("#inventory_available").val() == "true";
+        var available = $("#inventory_available").val();
         var condition = $("#inventory_condition").val();
         var count = $("#inventory_count").val();
-        
 
         var data = {
             "name": name,
             "category": category,
             "available": available,
             "condition": condition,
-            "count": count
+            "count": count,
         };
 
         var ajax = $.ajax({
@@ -74,7 +68,7 @@ $(function () {
 
 
     // ****************************************
-    // Update Inventory
+    // Update a inventory
     // ****************************************
 
     $("#update-btn").click(function () {
@@ -82,17 +76,16 @@ $(function () {
         var inventory_id = $("#inventory_id").val();
         var name = $("#inventory_name").val();
         var category = $("#inventory_category").val();
-        var available = $("#inventory_available").val() == "true";
+        var available = $("#inventory_available").val();
         var condition = $("#inventory_condition").val();
         var count = $("#inventory_count").val();
 
         var data = {
             "name": name,
             "category": category,
-            "available": available.
+            "available": available,
             "condition": condition,
-            "count": count
-            
+            "count": count,
         };
 
         var ajax = $.ajax({
@@ -114,7 +107,7 @@ $(function () {
     });
 
     // ****************************************
-    // Retrieve Inventory
+    // Retrieve a inventory
     // ****************************************
 
     $("#retrieve-btn").click(function () {
@@ -123,7 +116,7 @@ $(function () {
 
         var ajax = $.ajax({
             type: "GET",
-            url: "/inventory/" + inventory_id,
+            url: "/inventory/" + inventory_id.val(),
             contentType:"application/json",
             data: ''
         })
@@ -142,7 +135,7 @@ $(function () {
     });
 
     // ****************************************
-    // Delete Inventory
+    // Delete a Pet
     // ****************************************
 
     $("#delete-btn").click(function () {
@@ -176,14 +169,16 @@ $(function () {
     });
 
     // ****************************************
-    // Search for Inventory
+    // Search for a inventory
     // ****************************************
 
     $("#search-btn").click(function () {
 
         var name = $("#inventory_name").val();
         var category = $("#inventory_category").val();
-        var available = $("#inventory_available").val() == "true";
+        var available = $("#inventory_available").val();
+        var condition = $("#inventory_condition").val();
+        var count = $("#inventory_count").val();
 
         var queryString = ""
 
