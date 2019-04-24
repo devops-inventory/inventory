@@ -76,14 +76,14 @@ def method_not_supported(error):
                    error='Method not Allowed',
                    message=message), status.HTTP_405_METHOD_NOT_ALLOWED
 
-@app.errorhandler(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-def mediatype_not_supported(error):
-    """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
-    message = error.message or str(error)
-    app.logger.warning(message)
-    return jsonify(status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                   error='Unsupported media type',
-                   message=message), status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+#@app.errorhandler(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+#def mediatype_not_supported(error):
+ #   """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
+  #  message = error.message or str(error)
+   # app.logger.warning(message)
+    #return jsonify(status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+     #              error='Unsupported media type',
+      #             message=message), status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
 
 @app.errorhandler(status.HTTP_500_INTERNAL_SERVER_ERROR)
 def internal_server_error(error):
@@ -105,7 +105,7 @@ def index():
                    #version='1.0',
                    #paths=url_for('list_inventory', _external=True)
                   #), status.HTTP_200_OK
-    return app.send_static_file('index.html')
+    return app.send_static_file('mine_index.html')
 
 ######################################################################
 # RESTART
@@ -167,17 +167,28 @@ def create_inventory():
     Creates Inventory
     This endpoint will create Inventory based the data in the body that is posted
     """
-    app.logger.info('Request to create a inventory')
-    check_content_type('application/json')
+    data ={}
+    # Check for form submission data
+    if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        app.logger.info('Getting data from form submit')
+        data = {
+            'name': request.form['name'],
+            'category': request.form['category'],
+            'available': request.form['available'],
+            'condition': request.form['condition'],
+            'count': request.form['count']
+        }
+    else:
+        app.logger.info('Getting data from API call')
+        data = request.get_json()
+    app.logger.info(data)
     inventory = Inventory()
-    inventory.deserialize(request.get_json())
+    inventory.deserialize(data)
     inventory.save()
     message = inventory.serialize()
     location_url = url_for('get_inventory', inventory_id=inventory.id, _external=True)
     return make_response(jsonify(message), status.HTTP_201_CREATED,
-                         {
-                             'Location': location_url
-                         })
+                         {'Location': location_url})
 
 
 ######################################################################
@@ -213,6 +224,15 @@ def delete_inventory(inventory_id):
     inventory = Inventory.find(inventory_id)
     if inventory:
         inventory.delete()
+    return make_response('', status.HTTP_204_NO_CONTENT)
+
+######################################################################
+# DELETE ALL PET DATA (for testing only)
+######################################################################
+@app.route('/inventory/reset', methods=['DELETE'])
+def inventory_reset():
+    """ Removes all inventory from the database """
+    Inventory.remove_all()
     return make_response('', status.HTTP_204_NO_CONTENT)
 
 ######################################################################

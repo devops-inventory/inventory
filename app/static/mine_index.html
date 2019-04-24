@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Inventory Demo RESTful Service</title>
+    <title>Inventory Demo REST API Service</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="static/css/flatly_bootstrap.min.css">
-    <script type="text/javascript" src = "static/js/jquery-3.1.1.min.js"></script>
-    <script type="text/javascript" src="static/js/rest_api.js"></script>
+    <script type="text/javascript" src = "static/js/mine_jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="static/js/mine_rest_api.js"></script>
   </head>
   <body>
     <div class="container">
@@ -23,7 +23,7 @@
         </div>
 
         <div class="col-md-12" id="form_data">
-          Create, Retrieve, Update, and  Inventory:
+          Create, Retrieve, Update, and Delete Inventory:
           <div class="well">
             <div class="form-horizontal">
               <div class="form-group">
@@ -54,10 +54,7 @@
               <div class="form-group">
                 <label class="control-label col-sm-2" for="inventory_available">Available:</label>
                 <div class="col-sm-10">
-                  <select class="form-control" id="inventory_available">
-                      <option value="true" selected>True</option>
-                      <option value="false">False</option>
-                  </select>
+                  <input type="text" class="form-control" id="inventory_available" placeholder="Enter available as True or False">
                 </div>
               </div>
               <div class="form-group">
