@@ -46,7 +46,7 @@ class TestInventoryServer(unittest.TestCase):
         Inventory.remove_all()
         Inventory("tools", "widget1", True, "new",1).save()
         Inventory("materials", "widget2", False, "old",2).save()
-        
+
     def _create_inventorys(self, count):
         """ Factory method to create inventorys in bulk """
         inventorys = []
@@ -72,7 +72,7 @@ class TestInventoryServer(unittest.TestCase):
         resp = self.app.put('/restart')
         self.assertEqual(resp.status_code,status.HTTP_200_OK)
 
-        
+
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
         resp = self.app.get('/inventory')
@@ -147,6 +147,11 @@ class TestInventoryServer(unittest.TestCase):
         new_count = self.get_inventory_count()
         self.assertEqual(new_count, inventory_count - 1)
 
+    def test_inventory_reset(self):
+        """ Removes all inventory from the database """
+        resp = self.app.delete('/inventory/reset')
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
     def test_query_inventory_list_by_category(self):
         """ Query Inventorys by Category """
         resp = self.app.get('/inventory', query_string='category=widget1')
@@ -164,7 +169,7 @@ class TestInventoryServer(unittest.TestCase):
          bad_request_mock.side_effect = DataValidationError()
          resp = self.app.get('/inventory', query_string='name=widget1')
          self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-         
+
     @mock.patch('app.service.Inventory.find_by_name')
     def test_method_not_supported(self, method_mock):
          """ Handles unsuppoted HTTP methods with 405_METHOD_NOT_SUPPORTED """
@@ -172,13 +177,13 @@ class TestInventoryServer(unittest.TestCase):
          resp = self.app.put('/inventory', query_string='name=widget1')
          self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    #@mock.patch('app.service.Inventory.find_by_name')
-    #def test_mediatype_not_supported(self, media_mock):
-     #    """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
-      #   media_mock.side_effect = DataValidationError()
-       #  resp = self.app.post('/inventory', query_string='name=widget1', content_type='application/pdf')
-        # self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-         
+#    @mock.patch('app.service.Inventory.find_by_name')
+#    def test_mediatype_not_supported(self, media_mock):
+#         """ Handles unsuppoted media requests with 415_UNSUPPORTED_MEDIA_TYPE """
+#         media_mock.side_effect = DataValidationError()
+#         resp = self.app.post('/inventory', query_string='name=widget1', content_type='application/pdf')
+#         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
     @mock.patch('app.service.Inventory.find_by_name')
     def test_search_bad_data(self, inventory_find_mock):
         """ Test a search that returns bad data """
@@ -208,7 +213,7 @@ class TestInventoryServer(unittest.TestCase):
         data = json.loads(resp.data)
         return len(data)
 
-    
+
 ######################################################################
 #   M A I N
 ######################################################################

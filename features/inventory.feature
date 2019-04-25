@@ -62,7 +62,7 @@ Scenario: Update a Inventory
     Then I should not see "shirt" in the results
 
   #Issue 84 - Action @Nicole
-    
+
   #Issue 80 - Delete @Nicole
   Scenario: Delete an Inventory
     When I visit the "Home Page"
@@ -70,3 +70,6 @@ Scenario: Update a Inventory
     And I press the "Delete" button
     Then I should not see "1" in the "Id" field
     And I should not see "shirt" in the "Name" field
+    And I should not see "clothing" in the "Category" field
+    And I should not see "True" in the "Available" field
+    And I should not see "1" in the "Count" field
