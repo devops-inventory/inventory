@@ -5,6 +5,7 @@ Steps file for Inventory.feature
 """
 from os import getenv
 import json
+import logging
 import requests
 from behave import *
 from compare import expect, ensure
@@ -94,24 +95,24 @@ def step_impl(context, name):
     error_msg = "I should not see '%s' in '%s'" % (name, element.text)
     ensure(name in element.text, False, error_msg)
 
-
-@then('I should not see "{text_string}" in the "{element_name}" field')
-def step_impl(context, text_string, element_name):
-    element_id = 'inventory_' + element_name.lower()
-    element = context.driver.find_element_by_id(element_id)
-    expect(element.get_attribute('value')).to_equal(text_string)
+@then('The "{element_name}" field should be empty')
+def step_impl(context, element_name):
+    element = context.driver.find_element_by_id('search_results')
+    error_msg = "I should not see '%s' in '%s'" % (element_name, element.text)
+    ensure(element_name in element.text, False, error_msg)
 
 @then('I should see the message "{message}"')
 def step_impl(context, message):
     element = context.driver.find_element_by_id('flash_message')
     expect(element.text).to_contain(message)
-    # found = WebDriverWait(context.driver, WAIT_SECONDS).until(
-    #     expected_conditions.text_to_be_present_in_element(
-    #         (By.ID, 'flash_message'),
-    #         message
-    #     )
-    # )
-    # expect(found).to_be(True)
+    found = WebDriverWait(context.driver, WAIT_SECONDS).until(
+        expected_conditions.text_to_be_present_in_element(
+            (By.ID, 'flash_message'),
+            message
+        )
+    )
+    expect(found).to_be(True)
+
 
 ##################################################################
 # This code works because of the following naming convention:
@@ -119,6 +120,21 @@ def step_impl(context, message):
 # prefixed by 'inventory_' so the Name field has an id='inventory_name'
 # We can then lowercase the name and prefix with inventory_ to get the id
 ##################################################################
+
+
+@when('I change "{element_name}" to "{text_string}"')
+def step_impl(context, element_name, text_string):
+    element_id = 'inventory_' + element_name.lower()
+    element = context.driver.find_element_by_id(element_id)
+    # element = WebDriverWait(context.driver, WAIT_SECONDS).until(
+    #     expected_conditions.presence_of_element_located((By.ID, element_id))
+    # )
+    element.clear()
+    element.send_keys(text_string)
+
+@when('I switch "{key}" to "{value}"')
+def step_impl(context, key, value):
+     context.data[key] = value
 
 @then('I should see "{text_string}" in the "{element_name}" field')
 def step_impl(context, text_string, element_name):
@@ -133,22 +149,23 @@ def step_impl(context, text_string, element_name):
     # )
     # expect(found).to_be(True)
 
-@when('I change "{element_name}" to "{text_string}"')
-def step_impl(context, element_name, text_string):
+@then('I should not see "{text_string}" in the "{element_name}" field')
+def step_impl(context, text_string, element_name):
     element_id = 'inventory_' + element_name.lower()
     element = context.driver.find_element_by_id(element_id)
-    # element = WebDriverWait(context.driver, WAIT_SECONDS).until(
-    #     expected_conditions.presence_of_element_located((By.ID, element_id))
-    # )
+    error_msg = "I should not see '%s' in '%s'" % (text_string, element_name)
+    ensure(text_string in element_name, False, error_msg)
+
+@when('I copy the "{element_name}" field')
+def step_impl(context, element_name):
+    element_id = 'inventory_' + element_name.lower()
+    element = context.driver.find_element_by_id(element_id)
+    context.clipboard = element.get_attribute('value')
+    logging.info('Clipboard contains: %s', context.clipboard)
+
+@when('I paste the "{element_name}" field')
+def step_impl(context, element_name):
+    element_id = 'inventory_' + element_name.lower()
+    element = context.driver.find_element_by_id(element_id)
     element.clear()
-    element.send_keys(text_string)
-
-# @when('I change "{key}" to "{value}"')
-# def step_impl(context, key, value):
-#     context.data[key] = value
-
-# @then('I should see "{message}" in "{field}"')
-# def step_impl(context, message, field):
-#     """ Check a field for text """
-#     element = context.driver.find_element_by_id(field)
-#     assert message in element.text
+    element.send_keys(context.clipboard)

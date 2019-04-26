@@ -120,7 +120,7 @@ class Inventory(object):
             document = None
         if document:
             document.delete()
-            
+
     def serialize(self):
         """ Serializes Inventory into a dictionary """
         return {"id": self.id,
@@ -150,7 +150,7 @@ class Inventory(object):
                                       'bad or no data')
         if not self.id and '_id' in data:
             self.id = data['_id']
-            
+
         return self
 
 

@@ -67,12 +67,6 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn('Inventory Demo REST API Service', resp.data)
 
-    def test_restart(self):
-        """ Test restart """
-        resp = self.app.put('/restart')
-        self.assertEqual(resp.status_code,status.HTTP_200_OK)
-
-
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
         resp = self.app.get('/inventory')
@@ -119,6 +113,18 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(len(data), inventory_count + 1)
         self.assertIn(new_json, data)
 
+    def test_void_inventory(self):
+        """ Void inventory """
+        inventory = self.get_inventory('tools')[0] # returns a list
+        resp = self.app.put('/inventory/{}/void'.format(inventory['id']),
+                                       content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        void_inventory=resp.get_json()
+
+    def test_void_non_existing_inventory(self):
+        """ Void inventory that doesn't exist """
+        resp = self.app.put('/inventory/0/void', content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_inventory(self):
         """ Update an existing Inventory """
@@ -176,6 +182,7 @@ class TestInventoryServer(unittest.TestCase):
          method_mock.side_effect = None
          resp = self.app.put('/inventory', query_string='name=widget1')
          self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 #    @mock.patch('app.service.Inventory.find_by_name')
 #    def test_mediatype_not_supported(self, media_mock):
