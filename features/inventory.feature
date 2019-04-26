@@ -8,7 +8,7 @@ Background:
         | id | name       | category      | available | condition | count |
         |  1 | shirt      | clothing      | True      | new       | 1     |
         |  2 | pot        | kitchen       | True      | returned  | 3     |
-        |  3 | soap       | bath          | True      | new       | 5	  |
+        |  3 | soap       | bath          | True      | new       | 5	    |
 
 #Issue #78 - DONE BY SAM
 Scenario: The server is running
@@ -44,29 +44,50 @@ Scenario: List all clothing
     And I should not see "pot" in the results
     And I should not see "soap" in the results
 
-#Issue 79 - DONE BY JEFF
+#Issue 79 -
 Scenario: Update a Inventory
-    When I visit the "Home Page"
-    And I set the "Id" to "1"
-    And I press the "Retrieve" button
-    Then I should see "shirt" in the "Name" field
-    When I change "Name" to "sweatshirt"
-    And I press the "Update" button
-    Then I should see the message "Success"
-    When I set the "Id" to "1"
-    And I press the "Retrieve" button
-    Then I should see "sweatshirt" in the "Name" field
-    When I press the "Clear" button
-    And I press the "Search" button
-    Then I should see "sweatshirt" in the results
-    Then I should not see "shirt" in the results
+  When I visit the "Home Page"
+  And I set the "Name" to "shirt"
+  And I press the "Search" button
+  Then I should see "shirt" in the "Name" field
+  And I should see "clothing" in the results
+  When I copy the "Id" field
+  And I press the "Clear" button
+  And I paste the "Id" field
+  When I change "Name" to "top"
+  And I press the "Update" button
+  Then I should see the message "Success"
+  When I copy the "Id" field
+  And I press the "Clear" button
+  And I paste the "Id" field
+  And I press the "Retrieve" button
+  Then I should see the message "Success"
+  When I set the "Name" to "top"
+  And I press the "Search" button
+  Then I should see "top" in the "Name" field
 
   #Issue 84 - Action @Nicole
-    
+  Scenario: Void an Inventory
+    When I visit the "Home Page"
+    And I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Void" button
+    Then I should see the message "Success"
+
   #Issue 80 - Delete @Nicole
   Scenario: Delete an Inventory
     When I visit the "Home Page"
-    And I set the "Id" to "1"
-    And I press the "Delete" button
-    Then I should not see "1" in the "Id" field
-    And I should not see "shirt" in the "Name" field
+    And I set the "Name" to "shirt"
+    And I press the "Search" button
+    Then I should see the message "Success"
+    And I should see "clothing" in the results
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    When I press the "Delete" button
+    And I set the "Name" to "shirt"
+    And I press the "Search" button
+    Then I should not see "shirt" in the "Name" field
+    And I should not see "clothing" in the "Category" field
+    And the "Id" field should be empty

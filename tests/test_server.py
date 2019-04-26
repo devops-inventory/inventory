@@ -46,7 +46,7 @@ class TestInventoryServer(unittest.TestCase):
         Inventory.remove_all()
         Inventory("tools", "widget1", True, "new",1).save()
         Inventory("materials", "widget2", False, "old",2).save()
-        
+
     def _create_inventorys(self, count):
         """ Factory method to create inventorys in bulk """
         inventorys = []
@@ -67,12 +67,7 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn('Inventory Demo REST API Service', resp.data)
 
-    def test_restart(self):
-        """ Test restart """
-        resp = self.app.put('/restart')
-        self.assertEqual(resp.status_code,status.HTTP_200_OK)
 
-        
     def test_get_inventory_list(self):
         """ Get a list of Inventorys """
         resp = self.app.get('/inventory')
@@ -119,6 +114,18 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(len(data), inventory_count + 1)
         self.assertIn(new_json, data)
 
+    def test_void_inventory(self):
+        """ Void inventory """
+        inventory = self.get_inventory('tools')[0] # returns a list
+        resp = self.app.put('/inventory/{}/void'.format(inventory['id']),
+                                       content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        void_inventory=resp.get_json()
+
+    def test_void_non_existing_inventory(self):
+        """ Void inventory that doesn't exist """
+        resp = self.app.put('/inventory/0/void', content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_inventory(self):
         """ Update an existing Inventory """
@@ -164,7 +171,7 @@ class TestInventoryServer(unittest.TestCase):
          bad_request_mock.side_effect = DataValidationError()
          resp = self.app.get('/inventory', query_string='name=widget1')
          self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-         
+
     @mock.patch('app.service.Inventory.find_by_name')
     def test_method_not_supported(self, method_mock):
          """ Handles unsuppoted HTTP methods with 405_METHOD_NOT_SUPPORTED """
@@ -178,7 +185,7 @@ class TestInventoryServer(unittest.TestCase):
       #   media_mock.side_effect = DataValidationError()
        #  resp = self.app.post('/inventory', query_string='name=widget1', content_type='application/pdf')
         # self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-         
+
     @mock.patch('app.service.Inventory.find_by_name')
     def test_search_bad_data(self, inventory_find_mock):
         """ Test a search that returns bad data """
@@ -208,7 +215,7 @@ class TestInventoryServer(unittest.TestCase):
         data = json.loads(resp.data)
         return len(data)
 
-    
+
 ######################################################################
 #   M A I N
 ######################################################################

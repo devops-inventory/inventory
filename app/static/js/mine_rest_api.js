@@ -7,6 +7,7 @@ $(function () {
     // Updates the form with data from the response
     function update_form_data(res) {
         $("#inventory_id").val(res.id);
+        $("#inventory_id_inputted").val(res._id);
         $("#inventory_name").val(res.name);
         $("#inventory_category").val(res.category);
         $("#inventory_available").val(res.available);
@@ -25,8 +26,8 @@ $(function () {
 
     // Updates the flash message area
     function flash_message(message) {
-        $("#flash_message").empty();
-        $("#flash_message").append(message);
+      $("#flash_message").empty();
+      $("#flash_message").append(message);
     }
 
     // ****************************************
@@ -90,18 +91,18 @@ $(function () {
 
         var ajax = $.ajax({
                 type: "PUT",
-                url: "/inventory/" + inventory_id,
+                url: "/inventory/" + inventory.id,
                 contentType:"application/json",
                 data: JSON.stringify(data)
             })
 
         ajax.done(function(res){
-            update_form_data(res)
-            flash_message("Success")
+          update_form_data(res)
+          flash_message("Success")
         });
 
         ajax.fail(function(res){
-            flash_message(res.responseJSON.message)
+          flash_message(res.responseJSON.message)
         });
 
     });
@@ -116,7 +117,7 @@ $(function () {
 
         var ajax = $.ajax({
             type: "GET",
-            url: "/inventory/" + inventory_id.val(),
+            url: "/inventory/" + inventory.id,
             contentType:"application/json",
             data: ''
         })
@@ -135,7 +136,7 @@ $(function () {
     });
 
     // ****************************************
-    // Delete a Pet
+    // Delete a Inventory
     // ****************************************
 
     $("#delete-btn").click(function () {
@@ -144,17 +145,18 @@ $(function () {
 
         var ajax = $.ajax({
             type: "DELETE",
-            url: "/inventory/" + inventory_id,
+            url: "/inventory/" + inventory.id,
             contentType:"application/json",
             data: '',
         })
 
         ajax.done(function(res){
             clear_form_data()
-            flash_message("Inventory with ID [" + res.id + "] has been Deleted!")
+            flash_message("Inventory Deleted!")
         });
 
         ajax.fail(function(res){
+            clear_form_data()
             flash_message("Server error!")
         });
     });
@@ -164,8 +166,31 @@ $(function () {
     // ****************************************
 
     $("#clear-btn").click(function () {
-        $("#inventory_id").val("");
         clear_form_data()
+    });
+
+    // ****************************************
+    // Void an inventory
+    // ****************************************
+
+    $("#void-btn").click(function () {
+
+        var ajax = $.ajax({
+            type: "PUT",
+            url: "/inventory/" + inventory.id + "/void",
+            contentType:"application/json",
+            data: '',
+        })
+
+        ajax.done(function(res){
+            clear_form_data()
+            flash_message("Success")
+        });
+
+        ajax.fail(function(res){
+            clear_form_data()
+            flash_message("Error Voiding Inventory")
+        });
     });
 
     // ****************************************
@@ -212,12 +237,12 @@ $(function () {
             $("#search_results").empty();
             $("#search_results").append('<table class="table-striped">');
             var header = '<tr>'
-            header += '<th style="width:10%">ID</th>'
-            header += '<th style="width:40%">Name</th>'
-            header += '<th style="width:40%">Category</th>'
-            header += '<th style="width:10%">Available</th></tr>'
-            header += '<th style="width:10%">Condition</th></tr>'
-            header += '<th style="width:10%">Count</th></tr>'
+            header += '<th style=width:20>ID</th>'
+            header += '<th style="width:10">Name</th>'
+            header += '<th style="width:10">Category</th>'
+            header += '<th style="width:10">Available</th>'
+            header += '<th style="width:20">Condition</th>'
+            header += '<th style="width:20">Count</th></tr>'
             $("#search_results").append(header);
             for(var i = 0; i < res.length; i++) {
                 var inventory = res[i];
@@ -226,7 +251,6 @@ $(function () {
             }
 
             $("#search_results").append('</table>');
-
             flash_message("Success")
         });
 

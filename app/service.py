@@ -21,7 +21,7 @@ GET /inventory - Returns a list all of the Inventory
 GET /inventory/{id} - Returns the Inventory with a given id number
 POST /inventory - creates a new Inventory record in the database
 PUT /inventory/{id} - updates an Inventory record in the database
-PUT /restart - restarts service
+PUT /inventory/{id}/void - voids Inventory record in the database
 DELETE /inventory/{id} - deletes an Inventory record in the database
 """
 
@@ -108,14 +108,18 @@ def index():
     return app.send_static_file('mine_index.html')
 
 ######################################################################
-# RESTART
+# MAKE INVENTORY VOID
 ######################################################################
-@app.route('/restart', methods=['PUT'])
-def restart():
-	try:
-		some_queue.put("something")
-	except:
-		return "Failed"
+@app.route('/inventory/<string:inventory_id>/void', methods=['PUT'])
+def void_inventory(inventory_id):
+    """
+    Void an inventory item
+    """
+    app.logger.info('Request to void inventory with id: %s', inventory_id)
+    inventory = Inventory.find(inventory_id)
+    if not inventory:
+        raise NotFound("Inventory with id '{}' was not found.".format(inventory_id))
+    return make_response(jsonify(inventory.serialize()), status.HTTP_200_OK)
 
 ######################################################################
 # LIST ALL INVENTORY
@@ -201,14 +205,17 @@ def update_inventory(inventory_id):
 
     This endpoint will update an Inventory based the body that is posted
     """
-    app.logger.info('Request to update Inventory with id: %s', inventory_id)
+    app.logger.info('Request to Update a inventory with id [%s]', inventory_id)
     check_content_type('application/json')
     inventory = Inventory.find(inventory_id)
-    inventory.deserialize(request.get_json())
+    if not inventory:
+        raise NotFound("inventory with id '{}' was not found.".format(inventory_id))
+    data = request.get_json()
+    app.logger.info(data)
+    inventory.deserialize(data)
     inventory.id = inventory_id
     inventory.save()
     return make_response(jsonify(inventory.serialize()), status.HTTP_200_OK)
-
 
 ######################################################################
 # DELETE INVENTORY
