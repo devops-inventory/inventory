@@ -23,6 +23,7 @@
         </div>
 
         <div class="col-md-12" id="form_data">
+          Create, Retrieve, Update, and Delete Inventory:
           <div class="well">
             <div class="form-horizontal">
               <div class="form-group">
@@ -33,6 +34,7 @@
                 <div class="col-sm-4">
                   <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
                   <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
+                  <button type="submit" class="btn btn-danger" id="void-btn">Void</button>
                 </div>
               </div>
             </div> <!-- form div -->
@@ -53,7 +55,10 @@
               <div class="form-group">
                 <label class="control-label col-sm-2" for="inventory_available">Available:</label>
                 <div class="col-sm-10">
-                  <input type="text" class="form-control" id="inventory_available" placeholder="Enter available as True or False">
+                  <select class="form-control" id="inventory_available">
+                      <option value="true" selected>True</option>
+                      <option value="false">False</option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
@@ -74,7 +79,7 @@
                   <button type="submit" class="btn btn-primary" id="clear-btn">Clear</button>
                   <button type="submit" class="btn btn-success" id="create-btn">Create</button>
                   <button type="submit" class="btn btn-warning" id="update-btn">Update</button>
-                  <button type="submit" class="btn btn-warning" id="void-btn">Void</button>
+
                 </div>
               </div>
           </div> <!-- form div -->

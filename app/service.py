@@ -112,13 +112,18 @@ def index():
 ######################################################################
 @app.route('/inventory/<string:inventory_id>/void', methods=['PUT'])
 def void_inventory(inventory_id):
-    """
-    Void an inventory item
-    """
+    """Void an inventory item"""
     app.logger.info('Request to void inventory with id: %s', inventory_id)
+    check_content_type('application/json')
     inventory = Inventory.find(inventory_id)
     if not inventory:
         raise NotFound("Inventory with id '{}' was not found.".format(inventory_id))
+    data = request.get_json()
+    app.logger.info(data)
+    inventory.deserialize(data)
+    inventory.id = inventory_id
+    inventory.available = False
+    inventory.save()
     return make_response(jsonify(inventory.serialize()), status.HTTP_200_OK)
 
 ######################################################################
@@ -178,7 +183,7 @@ def create_inventory():
         data = {
             'name': request.form['name'],
             'category': request.form['category'],
-            'available': request.form['available'],
+            'available': request.form['available']==True,
             'condition': request.form['condition'],
             'count': request.form['count']
         }

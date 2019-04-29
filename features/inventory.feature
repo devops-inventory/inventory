@@ -38,35 +38,31 @@ Scenario: List all Inventory
 #Issue 82 - DONE BY SAM
 Scenario: List all clothing
     When I visit the "Home Page"
-    And I set the "Category" to "clothing"
+    And I set the "Name" to "shirt"
     And I press the "Search" button
-    Then I should see "shirt" in the results
+    Then I should see "clothing" in the results
     And I should not see "pot" in the results
     And I should not see "soap" in the results
 
-#Issue 79 -
 Scenario: Update a Inventory
   When I visit the "Home Page"
   And I set the "Name" to "shirt"
   And I press the "Search" button
-  Then I should see "shirt" in the "Name" field
-  And I should see "clothing" in the results
+  Then I should see "clothing" in the results
   When I copy the "Id" field
   And I press the "Clear" button
   And I paste the "Id" field
-  When I change "Name" to "top"
+  And I change "Name" to "top"
   And I press the "Update" button
   Then I should see the message "Success"
   When I copy the "Id" field
   And I press the "Clear" button
   And I paste the "Id" field
   And I press the "Retrieve" button
-  Then I should see the message "Success"
-  When I set the "Name" to "top"
-  And I press the "Search" button
   Then I should see "top" in the "Name" field
 
   #Issue 84 - Action @Nicole
+
   Scenario: Void an Inventory
     When I visit the "Home Page"
     And I set the "Name" to "shirt"
@@ -78,6 +74,7 @@ Scenario: Update a Inventory
     And I paste the "Id" field
     And I press the "Void" button
     Then I should see the message "Success"
+
 
   #Issue 80 - Delete @Nicole
   Scenario: Delete an Inventory
