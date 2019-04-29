@@ -69,7 +69,11 @@ Scenario: Update a Inventory
   #Issue 84 - Action @Nicole
   Scenario: Void an Inventory
     When I visit the "Home Page"
-    And I copy the "Id" field
+    And I set the "Name" to "shirt"
+    And I press the "Search" button
+    Then I should see "shirt" in the results
+    And I should see "clothing" in the results
+    When I copy the "Id" field
     And I press the "Clear" button
     And I paste the "Id" field
     And I press the "Void" button
