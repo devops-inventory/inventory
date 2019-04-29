@@ -114,12 +114,20 @@ class TestInventoryServer(unittest.TestCase):
         self.assertIn(new_json, data)
 
     def test_void_inventory(self):
-        """ Void inventory """
+        """ VOID Inventory """
         inventory = self.get_inventory('tools')[0] # returns a list
-        resp = self.app.put('/inventory/{}/void'.format(inventory['id']),
-                                       content_type='application/json')
+        self.assertEqual(inventory['available'], True)
+        inventory['available'] = False
+        # make the call
+        data = json.dumps(inventory)
+        resp = self.app.put('/inventory/{}/void'.format(inventory['id']), data=data,
+                            content_type='application/json')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        void_inventory=resp.get_json()
+        # go back and get it again
+        resp = self.app.get('/inventory/{}'.format(inventory['id']), content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_json = json.loads(resp.data)
+        self.assertEqual(new_json['available'], False)
 
     def test_void_non_existing_inventory(self):
         """ Void inventory that doesn't exist """

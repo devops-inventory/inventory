@@ -10,9 +10,13 @@ $(function () {
         $("#inventory_id_inputted").val(res._id);
         $("#inventory_name").val(res.name);
         $("#inventory_category").val(res.category);
-        $("#inventory_available").val(res.available);
         $("#inventory_condition").val(res.condition);
         $("#inventory_count").val(res.count);
+        if (res.available == true) {
+            $("#inventory_available").val("true");
+        } else {
+            $("#inventory_available").val("false");
+        }
     }
 
     /// Clears all form fields
@@ -33,40 +37,38 @@ $(function () {
     // ****************************************
     // Create a inventory
     // ****************************************
-
     $("#create-btn").click(function () {
 
-        var name = $("#inventory_name").val();
-        var category = $("#inventory_category").val();
-        var available = $("#inventory_available").val();
-        var condition = $("#inventory_condition").val();
-        var count = $("#inventory_count").val();
+      var name = $("#inventory_name").val();
+      var category = $("#inventory_category").val();
+      var available = $("#inventory_available").val() == "true";
+      var condition = $("#inventory_condition").val();
+      var count = $("#inventory_count").val();
 
-        var data = {
-            "name": name,
-            "category": category,
-            "available": available,
-            "condition": condition,
-            "count": count,
-        };
+      var data = {
+        "name": name,
+        "category": category,
+        "available": available,
+        "condition": condition,
+        "count": count
+      };
 
-        var ajax = $.ajax({
-            type: "POST",
-            url: "/inventory",
-            contentType:"application/json",
-            data: JSON.stringify(data),
-        });
+      var ajax = $.ajax({
+        type: "POST",
+        url: "/inventory",
+        contentType:"application/json",
+        data: JSON.stringify(data),
+      });
 
-        ajax.done(function(res){
-            update_form_data(res)
-            flash_message("Success")
-        });
+      ajax.done(function(res){
+                  update_form_data(res)
+                  flash_message("Success")
+              });
 
-        ajax.fail(function(res){
-            flash_message(res.responseJSON.message)
-        });
-    });
-
+              ajax.fail(function(res){
+                  flash_message(res.responseJSON.message)
+              });
+          });
 
     // ****************************************
     // Update a inventory
@@ -91,7 +93,7 @@ $(function () {
 
         var ajax = $.ajax({
                 type: "PUT",
-                url: "/inventory/" + inventory.id,
+                url: "/inventory/" + inventory_id,
                 contentType:"application/json",
                 data: JSON.stringify(data)
             })
@@ -117,7 +119,7 @@ $(function () {
 
         var ajax = $.ajax({
             type: "GET",
-            url: "/inventory/" + inventory.id,
+            url: "/inventory/" + inventory_id,
             contentType:"application/json",
             data: ''
         })
@@ -145,18 +147,17 @@ $(function () {
 
         var ajax = $.ajax({
             type: "DELETE",
-            url: "/inventory/" + inventory.id,
+            url: "/inventory/" + inventory_id,
             contentType:"application/json",
             data: '',
         })
 
         ajax.done(function(res){
             clear_form_data()
-            flash_message("Inventory Deleted!")
+            flash_message("Inventory has been Deleted!")
         });
 
         ajax.fail(function(res){
-            clear_form_data()
             flash_message("Server error!")
         });
     });
@@ -175,20 +176,20 @@ $(function () {
 
     $("#void-btn").click(function () {
 
+        var inventory_id = $("#inventory_id").val();
         var ajax = $.ajax({
             type: "PUT",
-            url: "/inventory/" + inventory.id + "/void",
+            url: "/inventory/" + inventory_id + "/void",
             contentType:"application/json",
             data: '',
         })
 
         ajax.done(function(res){
-            clear_form_data()
+            update_form_data(res)
             flash_message("Success")
         });
 
         ajax.fail(function(res){
-            clear_form_data()
             flash_message("Error Voiding Inventory")
         });
     });
