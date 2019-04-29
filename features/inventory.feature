@@ -62,21 +62,19 @@ Scenario: Update a Inventory
   Then I should see "top" in the "Name" field
 
   #Issue 84 - Action @Nicole
-Scenario: Void an Inventory
-  When I visit the "Home Page"
-  And I set the "Name" to "shirt"
-  And I press the "Search" button
-  Then I should see "clothing" in the results
-  When I copy the "Id" field
-  And I press the "Clear" button
-  And I paste the "Id" field
-  When I press the "Void" button
-  Then I should see the message "Success"
-  And I press the "Clear" button
-  And I set the "Name" to "shirt"
-  And I choose "Available" as "false"
-  And I press the "Search" button
-  Then I should see "false" in the results
+
+  Scenario: Void an Inventory
+    When I visit the "Home Page"
+    And I set the "Name" to "shirt"
+    And I press the "Search" button
+    Then I should see "shirt" in the results
+    And I should see "clothing" in the results
+    When I copy the "Id" field
+    And I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Void" button
+    Then I should see the message "Success"
+
 
   #Issue 80 - Delete @Nicole
   Scenario: Delete an Inventory
