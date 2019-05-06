@@ -59,7 +59,7 @@ CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
 # global variables for retry (must be int)
 RETRY_COUNT = int(os.environ.get('RETRY_COUNT', 10))
-RETRY_DELAY = int(os.environ.get('RETRY_DELAY', 1))
+RETRY_DELAY = int(os.environ.get('RETRY_DELAY', 2))
 RETRY_BACKOFF = int(os.environ.get('RETRY_BACKOFF', 2))
 
 class DataValidationError(Exception):
