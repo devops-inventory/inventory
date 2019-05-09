@@ -42,7 +42,7 @@ class TestInventoryServer(unittest.TestCase):
         """ Runs before each test """
         """ Initialize the Cloudant database """
         self.app = app.app.test_client()
-        Inventory.init_db("tests")
+        Inventory.init_db("tests_intentory")
         Inventory.remove_all()
         Inventory("tools", "widget1", True, "new",1).save()
         Inventory("materials", "widget2", False, "old",2).save()
