@@ -46,6 +46,7 @@ count (int) - The quantity in stock
 import logging
 import os
 import json
+from retry import retry
 from cloudant.client import Cloudant
 from cloudant.query import Query
 from requests import HTTPError, ConnectionError
@@ -55,6 +56,11 @@ ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
 CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
 CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
 CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
+
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get('RETRY_COUNT', 15))
+RETRY_DELAY = int(os.environ.get('RETRY_DELAY', 3))
+RETRY_BACKOFF = int(os.environ.get('RETRY_BACKOFF', 2))
 
 class DataValidationError(Exception):
     """ Custom Exception with data validation fails """
@@ -78,6 +84,8 @@ class Inventory(object):
         self.condition = condition
         self.count = count
 
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def create(self):
         """Creates a new inventory in the database"""
         if self.name is None:   # name is the only required field
@@ -90,7 +98,9 @@ class Inventory(object):
 
         if document.exists():
             self.id = document['_id']
-
+    
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def update(self):
         """
         Updates a Inventory in the database
@@ -102,7 +112,9 @@ class Inventory(object):
         if document:
             document.update(self.serialize())
             document.save()
-
+    
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def save(self):
         """ Saves a Inventory in the database """
         if self.name is None:   # name is the only required field
@@ -111,7 +123,9 @@ class Inventory(object):
             self.update()
         else:
             self.create()
-
+    
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def delete(self):
         """ Deletes Inventory from the database """
         try:
@@ -120,7 +134,7 @@ class Inventory(object):
             document = None
         if document:
             document.delete()
-            
+
     def serialize(self):
         """ Serializes Inventory into a dictionary """
         return {"id": self.id,
@@ -150,7 +164,7 @@ class Inventory(object):
                                       'bad or no data')
         if not self.id and '_id' in data:
             self.id = data['_id']
-            
+
         return self
 
 
@@ -165,22 +179,30 @@ class Inventory(object):
         cls.client.disconnect()
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def create_query_index(cls, field_name, order='asc'):
         """ Creates a new query index for searching """
         cls.database.create_query_index(index_name=field_name, fields=[{field_name: order}])
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def all(cls):
         """ Returns all of the Inventory in the database """
         return cls.query.all()
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def remove_all(cls):
         """ Removes all documents from the database (use for testing)  """
         for document in cls.database:
             document.delete()
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def all(cls):
         """ Query that returns all inventory """
         results = []
@@ -191,6 +213,8 @@ class Inventory(object):
         return results
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by(cls, **kwargs):
         """ Find records using selector """
         query = Query(cls.database, selector=kwargs)
@@ -202,6 +226,8 @@ class Inventory(object):
         return results
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find(cls, inventory_id):
         """ Query that finds Inventory by their id """
         try:
@@ -211,21 +237,29 @@ class Inventory(object):
             return None
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_name(cls, name):
         """ Query that finds Inventory by their name """
         return cls.find_by(name=name)
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_category(cls, category):
         """ Query that finds Inventory by their category """
         return cls.find_by(category=category)
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_availability(cls, available=True):
         """ Query that finds Inventory by their availability """
         return cls.find_by(available=available)
 
     @classmethod
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_condition(cls, condition):
         """ Query that finds Inventory by their condition """
         return cls.find_by(condition=condition)

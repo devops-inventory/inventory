@@ -44,8 +44,8 @@ class TestInventoryServer(unittest.TestCase):
         self.app = app.app.test_client()
         Inventory.init_db("tests_inventory")
         Inventory.remove_all()
-        Inventory("tools", "widget1", True, "new").save()
-        Inventory("materials", "widget2", False, "old").save()
+        Inventory("tools", "widget1", True, "new",1).save()
+        Inventory("materials", "widget2", False, "old",2).save()
 
     def _create_inventorys(self, count):
         """ Factory method to create inventorys in bulk """
@@ -65,13 +65,7 @@ class TestInventoryServer(unittest.TestCase):
         """ Test the Home Page """
         resp = self.app.get('/')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertEqual(data['name'], 'Inventory REST API Service')
-
-    def test_restart(self):
-        """ Test restart """
-        resp = self.app.put('/restart')
-        self.assertEqual(resp.status_code,status.HTTP_200_OK)
+        self.assertIn('Inventory Demo REST API Service', resp.data)
 
 
     def test_get_inventory_list(self):
@@ -120,6 +114,26 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(len(data), inventory_count + 1)
         self.assertIn(new_json, data)
 
+    def test_void_inventory(self):
+        """ VOID Inventory """
+        inventory = self.get_inventory('tools')[0] # returns a list
+        self.assertEqual(inventory['available'], True)
+        inventory['available'] = False
+        # make the call
+        data = json.dumps(inventory)
+        resp = self.app.put('/inventory/{}/void'.format(inventory['id']), data=data,
+                            content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        # go back and get it again
+        resp = self.app.get('/inventory/{}'.format(inventory['id']), content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        new_json = json.loads(resp.data)
+        self.assertEqual(new_json['available'], False)
+
+    def test_void_non_existing_inventory(self):
+        """ Void inventory that doesn't exist """
+        resp = self.app.put('/inventory/0/void', content_type='application/json')
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_inventory(self):
         """ Update an existing Inventory """
@@ -147,6 +161,11 @@ class TestInventoryServer(unittest.TestCase):
         self.assertEqual(len(resp.data), 0)
         new_count = self.get_inventory_count()
         self.assertEqual(new_count, inventory_count - 1)
+
+    def test_inventory_reset(self):
+        """ Removes all inventory from the database """
+        resp = self.app.delete('/inventory/reset')
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_query_inventory_list_by_category(self):
         """ Query Inventorys by Category """
@@ -179,6 +198,7 @@ class TestInventoryServer(unittest.TestCase):
          media_mock.side_effect = DataValidationError()
          resp = self.app.post('/inventory', query_string='name=widget1', content_type='application/pdf')
          self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
 
     @mock.patch('app.service.Inventory.find_by_name')
     def test_search_bad_data(self, inventory_find_mock):
