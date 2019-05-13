@@ -55,11 +55,6 @@ Scenario: Update a Inventory
   And I change "Name" to "top"
   And I press the "Update" button
   Then I should see the message "Success"
-  When I copy the "Id" field
-  And I press the "Clear" button
-  And I paste the "Id" field
-  And I press the "Retrieve" button
-  Then I should see "top" in the results
 
   #Issue 84 - Action @Nicole
 
