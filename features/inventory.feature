@@ -59,7 +59,7 @@ Scenario: Update a Inventory
   And I press the "Clear" button
   And I paste the "Id" field
   And I press the "Retrieve" button
-  Then I should see "top" in the "Name" field
+  Then I should see "top" in the results
 
   #Issue 84 - Action @Nicole
 
