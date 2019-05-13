@@ -134,7 +134,7 @@ def step_impl(context, key, value):
 def step_impl(context, text_string, element_name):
     found = WebDriverWait(context.driver, WAIT_SECONDS).until(
         expected_conditions.text_to_be_present_in_element_value(
-            (By.ID, element_id),
+            (By.ID, element_name),
             text_string
         )
     )
