@@ -13,7 +13,7 @@ applications:
   buildpack: python_buildpack
   command: null
   services:
-  - Cloudant
+  #- Cloudant
   env:
     FLASK_APP : server
     FLASK_DEBUG : false
