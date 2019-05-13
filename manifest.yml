@@ -12,8 +12,8 @@ applications:
   disk_quota: 1024M
   buildpack: python_buildpack
   command: null
-  services:
-  - Cloudant
+ # services:
+ # - Cloudant
   env:
     FLASK_APP : server
     FLASK_DEBUG : false
